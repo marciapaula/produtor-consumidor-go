@@ -17,7 +17,7 @@
 ## Execução do Código
 
 - **Ambiente Online Utilizado:** Go Playground (go.dev/play)
-- **Permalink:** [https://go.dev/play/p/gJwv2ypibzx](https://go.dev/play/p/gJwv2ypibzx)
+- **Permalink:** [https://go.dev/play/p/gJwv2ypibzx](https://go.dev/play/p/U9MCwuryCb5)
 - **Site de apoio do seminário:** [https://prodconsumer.web.app](https://prodconsumer.web.app)
 
 ### Instruções de Teste (Entrada e Saída)
