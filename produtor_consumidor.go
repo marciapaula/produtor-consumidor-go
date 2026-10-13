@@ -93,7 +93,7 @@ func consumidor(id int, canal <-chan int, grupo *sync.WaitGroup) {
 }
 
 func main() {
-	fmt.Printf("Produtor-consumidor em Go | canal de %d | %d itens | %d consumidores\n\n",
+	fmt.Printf("Produtor-consumidor em Go | canal de %d | %d itens | consumidores: %d\n\n",
 		capacidade, totalItens, consumidores)
 	fmt.Println("--- FASE 1: produção lenta, os consumidores vão esperar ---")
 
@@ -115,6 +115,9 @@ func main() {
 // Cenários para a demonstração ao vivo:
 //   1. capacidade = 1    -> na fase 2 o produtor espera a cada item.
 //   2. capacidade = 10   -> o canal nunca enche e o produtor nunca espera.
-//   3. consumidores = 1  -> o consumo fica mais lento e a fila cresce.
-//   4. comentar close(canal) -> o laço range nunca termina e o runtime aborta
-//      com "fatal error: all goroutines are asleep - deadlock!"
+//   3. consumidores = 1  -> na rajada o canal fica cheio por mais tempo e o
+//      produtor espera várias vezes.
+//   4. comentar close(canal) e o registrar logo abaixo dele (sozinho, o
+//      registrar anunciaria um fechamento que não aconteceu) -> o laço range
+//      nunca termina e o runtime aborta com
+//      "fatal error: all goroutines are asleep - deadlock!"
