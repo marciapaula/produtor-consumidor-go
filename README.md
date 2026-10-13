@@ -228,7 +228,7 @@ Parte da diferença de linhas vem do log formatado, que em C exige funções pr�
 
 **Ciclo de vida.** `close(canal)` é uma operação da linguagem. Depois dela, o `range` drena os itens restantes e termina. Enviar para um canal fechado causa `panic` — um erro explícito, em vez de corrupção silenciosa.
 
-**Modelo de memória.** O *Go Memory Model* garante que um envio no canal *acontece antes* (happens-before) do recebimento correspondente. Quem recebe o item enxerga tudo o que o produtor escreveu antes de enviá-lo, sem `volatile` nem barreiras de memória manuais. Em Java, a mesma garantia existe, mas depende de `synchronized` ou `volatile` usados corretamente.
+**Modelo de memória.** O *Go Memory Model* garante que um envio no canal *acontece antes* (happens-before) do recebimento correspondente. Quem recebe o item enxerga tudo o que o produtor escreveu antes de enviá-lo, sem `volatile` nem barreiras de memória manuais. Em Java, a mesma garantia existe, mas depende de `synchronized` ou `volatile` usados de forma  corretamente.
 
 **Detecção de impasse.** Se todas as goroutines ficarem bloqueadas, o runtime de Go aborta com `fatal error: all goroutines are asleep - deadlock!`. O grupo reproduziu isso comentando a linha `close(canal)` — a saída está em `codigo/saida_go_deadlock.txt`. Em C, um deadlock simplesmente congela o programa, sem mensagem.
 
