@@ -2,7 +2,7 @@
 
 ### Grupo 01
 
-#### Integrantes (3 a 5 alunos)
+#### Integrantes
 - Andrei Rodrigues de Barros (33468982)
 - Gabriel Silva Medeiros (32825706)
 - Márcia Paula de Sousa (35835133)
@@ -17,7 +17,7 @@
 ## Execução do Código
 
 - **Ambiente Online Utilizado:** Go Playground (go.dev/play)
-- **Permalink:** `COLAR AQUI O PERMALINK NOVO` \<!-- gerar com Share a partir de codigo/produtor_consumidor.go e testar em aba anônima -->
+- **Permalink:** `COLAR AQUI O PERMALINK NOVO` \<!-- gerar com Share a partir de produtor_consumidor.go e testar em aba anônima -->
 - **Site de apoio do seminário:** [https://prodconsumer.web.app](https://prodconsumer.web.app)
 
 ### Instruções de Teste (Entrada e Saída)
@@ -145,24 +145,19 @@ As duas condições críticas do problema — **canal cheio** (o produtor precis
 
 As mensagens do tipo `canal cheio, esperando espaço` existem apenas para tornar a espera visível no log: a verificação `len(canal) == capacidade` só decide o que imprimir, e quem realmente faz a espera é o canal, na instrução seguinte.
 
-**Versões de comparação.** O grupo escreveu o mesmo programa, com o mesmo comportamento e a mesma saída, em C (`pthread`, um `pthread_mutex_t` e duas `pthread_cond_t` — `tem_espaco` e `tem_item` — sobre um buffer circular alocado com `malloc`) e em Java (monitor, com métodos `synchronized`, `wait()` e `notifyAll()` sobre um vetor circular). Os três estão na pasta `codigo/` e também aparecem no site do seminário.
+**Versões de comparação.** O grupo escreveu o mesmo programa, com o mesmo comportamento e a mesma saída, em C (`pthread`, um `pthread_mutex_t` e duas `pthread_cond_t` — `tem_espaco` e `tem_item` — sobre um buffer circular alocado com `malloc`) e em Java (monitor, com métodos `synchronized`, `wait()` e `notifyAll()` sobre um vetor circular). Os três estão na raiz do repositório e também aparecem no site do seminário.
 
 **Estrutura do repositório:**
 
 ```
 .
-├── Paradigma01.pdf           # relatório em PDF
-├── codigo/
-│   ├── produtor_consumidor.go      # solução em Go (a do permalink)
-│   ├── produtor_consumidor.c       # versão de comparação em C
-│   ├── ProdutorConsumidor.java     # versão de comparação em Java
-│   ├── saida_go.txt                # saídas reais das execuções
-│   ├── saida_c.txt
-│   ├── saida_java.txt
-│   └── saida_go_deadlock.txt       # cenário sem close(canal)
-├── Docs/                     # pesquisa e relatórios de apoio
-├── public/                   # site do seminário (Firebase Hosting)
-├── firebase.json
+├── Docs/
+│   ├── Paradigma01.md        # relatório técnico (texto-fonte)
+│   └── Paradigma01.pdf       # relatório técnico em PDF
+├── produtor_consumidor.go    # solução em Go (a do permalink)
+├── produtor_consumidor.c     # versão de comparação em C
+├── Main.java                 # versão de comparação em Java
+├── .gitignore
 └── README.md
 ```
 
