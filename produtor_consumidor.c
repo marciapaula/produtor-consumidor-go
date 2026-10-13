@@ -220,7 +220,7 @@ int main(void) {
     setlocale(LC_ALL, "Portuguese");
     clock_gettime(CLOCK_MONOTONIC, &inicio_programa);
 
-    printf("Produtor-consumidor em C | buffer de %d | %d itens | %d consumidores\n\n",
+    printf("Produtor-consumidor em C | buffer de %d | %d itens | consumidores: %d\n\n",
            CAPACIDADE, TOTAL_ITENS, CONSUMIDORES);
     printf("--- FASE 1: produção lenta, os consumidores vão esperar ---\n");
 

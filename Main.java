@@ -163,7 +163,7 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         inicioPrograma = System.nanoTime();
 
-        saida.printf("Produtor-consumidor em Java | buffer de %d | %d itens | %d consumidores%n%n",
+        saida.printf("Produtor-consumidor em Java | buffer de %d | %d itens | consumidores: %d%n%n",
                 CAPACIDADE, TOTAL_ITENS, CONSUMIDORES);
         saida.println("--- FASE 1: produção lenta, os consumidores vão esperar ---");
 
