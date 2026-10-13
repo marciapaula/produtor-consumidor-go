@@ -1,0 +1,223 @@
+/* ============================================================
+   CANAL — Componentes: palcos, código, listas
+   ============================================================ */
+
+@layer components {
+
+  /* ---------- Palco: onde as visualizações são montadas ---------- */
+
+  .palco {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-block-size: 22rem;
+    margin: 0;
+    background-color: var(--bg-raised);
+    border: var(--hairline) solid var(--line);
+    container-type: inline-size;
+    overflow: hidden;
+  }
+
+  .palco--alto {
+    min-block-size: 30rem;
+  }
+
+  /* A síntese final (cena 19) não é mais uma peça de laboratório numa
+     vitrine — é a imagem que fecha a apresentação. Sem moldura, sem
+     grade técnica, sem altura mínima de card: os números ficam soltos
+     na própria cena, não dentro de mais uma caixa. */
+  .palco--fechamento {
+    min-block-size: 0;
+    background-color: transparent;
+    border: none;
+  }
+
+  .palco--fechamento::before {
+    display: none;
+  }
+
+  @media (min-width: 64rem) {
+    .palco { min-block-size: 26rem; }
+    .palco--alto { min-block-size: 34rem; }
+  }
+
+  /* Placeholder honesto: identifica a peça e o estado de construção.
+     Removido pelo módulo de visualização quando ele monta. */
+  .palco-vazio {
+    display: grid;
+    gap: var(--space-xs);
+    justify-items: center;
+    padding: var(--space-lg);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--fg-subtle);
+  }
+
+  .palco-vazio::before {
+    content: "";
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    border: var(--hairline) dashed var(--line-strong);
+  }
+
+  .palco-vazio::after {
+    content: "a construir";
+    padding: 0.15em 0.6em;
+    border: var(--hairline) solid var(--state-blocked);
+    color: var(--state-blocked);
+    font-size: 0.65rem;
+  }
+
+  /* Grade técnica de fundo: reforça a leitura de laboratório */
+  .palco::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.4;
+    background-image:
+      linear-gradient(to right, var(--line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+    background-size: 3rem 3rem;
+    mask-image: radial-gradient(85% 70% at 50% 50%, black, transparent);
+  }
+
+  @media (forced-colors: active) {
+    .palco::before { display: none; }
+  }
+
+  /* ---------- Código ---------- */
+
+  .codigo {
+    margin: 0;
+    padding: var(--space-md);
+    background-color: var(--bg-sunken);
+    border: var(--hairline) solid var(--line);
+    overflow-x: auto;
+    font-size: var(--fs-small);
+    line-height: var(--leading-normal);
+    color: var(--fg);
+    tab-size: 4;
+  }
+
+  .codigo .kw { color: var(--accent-soft); }
+  .codigo .str { color: var(--hold-300); }
+  .codigo .num { color: var(--hold-300); }
+  .codigo .com { color: var(--fg-subtle); font-style: italic; }
+  .codigo .risco { color: var(--fault-300); }
+
+  .prosa code,
+  .nota code,
+  .aviso code,
+  .referencias code {
+    padding: 0.1em 0.35em;
+    background-color: var(--bg-raised);
+    border: var(--hairline) solid var(--line);
+    color: var(--accent-soft);
+  }
+
+  /* ---------- Botões ---------- */
+
+  .botao {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    min-block-size: 44px;
+    padding-inline: var(--space-md);
+    background-color: transparent;
+    border: var(--hairline) solid var(--accent);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    text-decoration: none;
+    transition:
+      background-color var(--dur-ui) var(--ease-out-quart),
+      color var(--dur-ui) var(--ease-out-quart),
+      box-shadow var(--dur-ui) var(--ease-out-quart);
+  }
+
+  .botao:hover:not(:disabled) {
+    background-color: var(--accent);
+    color: var(--ink-1000);
+    box-shadow: var(--glow-flow);
+  }
+
+  .botao--discreto {
+    border-color: var(--line-strong);
+    color: var(--fg-muted);
+  }
+
+  .botao--discreto:hover:not(:disabled) {
+    background-color: var(--bg-elevated);
+    color: var(--fg-strong);
+    box-shadow: none;
+  }
+
+  /* ---------- Célula de buffer: motivo gráfico recorrente ---------- */
+
+  .celulas {
+    display: flex;
+    gap: var(--space-3xs);
+  }
+
+  .celula {
+    flex: 1;
+    aspect-ratio: 1;
+    border: var(--hairline) solid var(--line-strong);
+    transition:
+      background-color var(--dur-ui) var(--ease-out-quart),
+      border-color var(--dur-ui) var(--ease-out-quart);
+  }
+
+  .celula[data-estado="cheia"] {
+    background-color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .celula[data-estado="bloqueada"] {
+    background-color: var(--state-blocked);
+    border-color: var(--state-blocked);
+  }
+
+  .celula[data-estado="corrompida"] {
+    background-color: var(--state-fault);
+    border-color: var(--state-fault);
+  }
+
+  /* ---------- Referências ---------- */
+
+  .referencias {
+    display: grid;
+    gap: var(--space-sm);
+    max-inline-size: var(--measure);
+    margin: 0;
+    padding-inline-start: var(--space-md);
+    font-size: var(--fs-small);
+    color: var(--fg-muted);
+  }
+
+  .referencias li::marker {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    color: var(--fg-subtle);
+  }
+
+  .referencias cite {
+    font-style: italic;
+    color: var(--fg);
+  }
+
+  .referencias a {
+    color: var(--accent);
+    text-decoration-color: var(--line-strong);
+  }
+
+  .referencias a:hover {
+    text-decoration-color: currentColor;
+  }
+}

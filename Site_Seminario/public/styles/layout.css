@@ -1,0 +1,403 @@
+/* ============================================================
+   CANAL — Layout: atos, cenas e estrutura de página
+   ============================================================ */
+
+@layer components {
+
+  /* ---------- Utilidades de acesso ---------- */
+
+  .sr-only {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .pular {
+    position: fixed;
+    inset-block-start: var(--space-sm);
+    inset-inline-start: var(--space-sm);
+    z-index: 200;
+    padding: var(--space-2xs) var(--space-sm);
+    background-color: var(--accent);
+    color: var(--ink-1000);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    text-decoration: none;
+    translate: 0 -200%;
+    transition: translate var(--dur-ui) var(--ease-out-quart);
+  }
+
+  .pular:focus-visible {
+    translate: 0 0;
+  }
+
+  /* ---------- Barra superior ---------- */
+
+  .barra {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    block-size: var(--altura-barra);
+    padding-inline: var(--gutter);
+    background-color: oklch(0.145 0.008 240 / 0.72);
+    backdrop-filter: blur(12px);
+    border-block-end: var(--hairline) solid var(--line);
+  }
+
+  .barra-marca {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: var(--fg-strong);
+    text-decoration: none;
+  }
+
+  .barra-marca span {
+    color: var(--accent);
+  }
+
+  .barra-ato {
+    flex: 1;
+    min-inline-size: 0;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-machine);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .barra-progresso {
+    inline-size: clamp(4rem, 14vw, 12rem);
+    block-size: 2px;
+    background-color: var(--line-strong);
+  }
+
+  .barra-preenchimento {
+    display: block;
+    block-size: 100%;
+    inline-size: 100%;
+    background-color: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  @media (max-width: 34rem) {
+    .barra-ato { display: none; }
+  }
+
+  /* ---------- Cenas: esqueleto comum ---------- */
+
+  .cena {
+    position: relative;
+    display: grid;
+    gap: var(--space-xl);
+    align-items: center;
+    inline-size: min(100% - var(--gutter) * 2, var(--container));
+    margin-inline: auto;
+    padding-block: var(--space-3xl);
+  }
+
+  @media (min-width: 64rem) {
+    .cena:where([data-tipo="fixada"], [data-tipo="interativa"], [data-tipo="cinematica"]) {
+      grid-template-columns: minmax(0, 27rem) minmax(0, 1fr);
+      gap: var(--space-2xl);
+    }
+  }
+
+  .rotulo {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    font-weight: 500;
+    letter-spacing: var(--tracking-machine);
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 var(--space-sm);
+  }
+
+  .titulo {
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    font-weight: 300;
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-display);
+    color: var(--fg-strong);
+    text-wrap: balance;
+    margin: 0 0 var(--space-md);
+  }
+
+  .titulo-grande {
+    font-family: var(--font-display);
+    font-size: var(--fs-h1);
+    font-weight: 300;
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-display);
+    color: var(--fg-strong);
+    text-wrap: balance;
+    margin: 0 0 var(--space-lg);
+  }
+
+  .titulo-codigo {
+    font-family: var(--font-mono);
+    font-size: 0.78em;
+    font-weight: 500;
+    letter-spacing: var(--tracking-normal);
+    color: var(--accent);
+  }
+
+  .prosa {
+    max-inline-size: var(--measure);
+    color: var(--fg);
+  }
+
+  .prosa + .prosa {
+    margin-block-start: var(--space-sm);
+  }
+
+  .prosa b {
+    font-weight: 500;
+    color: var(--fg-strong);
+  }
+
+  .nota {
+    max-inline-size: var(--measure);
+    margin-block-start: var(--space-md);
+    padding-inline-start: var(--space-sm);
+    border-inline-start: 2px solid var(--accent);
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    color: var(--fg-muted);
+  }
+
+  .aviso {
+    max-inline-size: var(--measure);
+    margin-block-start: var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
+    border: var(--hairline) solid var(--state-blocked);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    line-height: var(--leading-normal);
+    color: var(--hold-300);
+  }
+
+  .cena-texto--centro {
+    grid-column: 1 / -1;
+    max-inline-size: 46rem;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .cena-texto--centro :where(.prosa, .nota) {
+    margin-inline: auto;
+  }
+
+  .cena-texto--largo {
+    grid-column: 1 / -1;
+    inline-size: 100%;
+  }
+
+  /* ---------- Cena de abertura (cinemática com vídeo) ---------- */
+
+  .cena:where([data-cena="00"]) {
+    grid-template-columns: minmax(0, 1fr);
+    min-block-size: 100dvh;
+    inline-size: 100%;
+    max-inline-size: none;
+    padding: 0;
+    /* Tipografia ancorada no terço inferior: o conduto fica livre no quadro
+       superior e o texto cai sobre a parte escura do gradiente. É o que
+       garante legibilidade em qualquer quadro do loop. */
+    place-items: end start;
+    overflow: hidden;
+  }
+
+  .cena-video {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    aspect-ratio: 16 / 9;
+  }
+
+  .cena-veu {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to bottom in oklab,
+        oklch(0.145 0.008 240 / 0.35) 0%,
+        oklch(0.145 0.008 240 / 0.12) 28%,
+        oklch(0.145 0.008 240 / 0.55) 44%,
+        oklch(0.145 0.008 240 / 0.92) 56%,
+        oklch(0.145 0.008 240 / 1) 76%),
+      radial-gradient(130% 90% at 50% 32%, transparent 30%, oklch(0.11 0.006 240 / 0.75) 100%);
+  }
+
+  .cena-abertura {
+    position: relative;
+    inline-size: min(100% - var(--gutter) * 2, var(--container));
+    margin-inline: auto;
+    padding-block-end: var(--space-2xl);
+  }
+
+  .titulo-abertura {
+    font-family: var(--font-display);
+    font-size: var(--fs-display);
+    font-weight: 300;
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+    color: var(--fg-strong);
+    text-wrap: balance;
+    max-inline-size: 18ch;
+    margin: var(--space-sm) 0 0;
+  }
+
+  .prosa-abertura {
+    max-inline-size: 42ch;
+    margin-block-start: var(--space-md);
+    font-size: var(--fs-lead);
+    color: var(--fg-muted);
+  }
+
+  .indicio {
+    position: absolute;
+    inset-block-end: var(--space-sm);
+    inset-inline-end: var(--gutter);
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-machine);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+
+  /* ---------- Abertura de ato ---------- */
+
+  .ato-abertura {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-md);
+    inline-size: min(100% - var(--gutter) * 2, var(--container));
+    margin-inline: auto;
+    padding-block: var(--space-2xl) var(--space-sm);
+    border-block-end: 2px solid var(--accent);
+  }
+
+  .ato-abertura--falha { border-color: var(--state-fault); }
+  .ato-abertura--maquina { border-color: var(--state-blocked); }
+  .ato-abertura--prova { border-color: var(--bone-500); }
+
+  .ato-num {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-machine);
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+
+  .ato-abertura--falha .ato-num { color: var(--state-fault); }
+  .ato-abertura--maquina .ato-num { color: var(--state-blocked); }
+  .ato-abertura--prova .ato-num { color: var(--bone-500); }
+
+  .ato-nome {
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    font-weight: 300;
+    letter-spacing: var(--tracking-display);
+    color: var(--fg-strong);
+    margin: 0;
+  }
+
+  /* ---------- Cena do lema: o vale da curva ---------- */
+
+  .cena:where([data-tipo="lema"]) {
+    grid-template-columns: minmax(0, 1fr);
+    min-block-size: 92dvh;
+    place-items: center;
+    padding-block: var(--space-3xl);
+  }
+
+  .lema {
+    max-inline-size: min(90%, 62rem);
+    margin: 0;
+    text-align: center;
+  }
+
+  /* Duas linhas com papéis diferentes, não um bloco de texto corrido:
+     a premissa que se rejeita, depois — sozinha, em destaque — a tese.
+     display: flex faz cada filho ocupar sua própria linha independente
+     da largura, então a quebra nunca cai no meio de uma cláusula. */
+  .lema-texto {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    font-family: var(--font-display);
+    font-size: var(--fs-h1);
+    font-weight: 300;
+    line-height: 1.12;
+    letter-spacing: var(--tracking-display);
+    color: var(--fg-strong);
+    margin: 0;
+  }
+
+  .lema-texto > * {
+    text-wrap: balance;
+    overflow-wrap: normal;
+  }
+
+  .lema-texto em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .lema-fonte {
+    margin-block-start: var(--space-lg);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+
+  /* ---------- Cena-eixo: o argumento central ---------- */
+
+  .cena--eixo::before {
+    content: "";
+    position: absolute;
+    inset-block: var(--space-2xl);
+    inset-inline-start: calc(var(--gutter) * -0.5);
+    inline-size: 2px;
+    background: linear-gradient(to bottom in oklab,
+      transparent, var(--accent) 20% 80%, transparent);
+  }
+
+  /* ---------- Rodapé ---------- */
+
+  .rodape {
+    inline-size: min(100% - var(--gutter) * 2, var(--container));
+    margin-inline: auto;
+    padding-block: var(--space-xl) var(--space-2xl);
+    border-block-start: var(--hairline) solid var(--line);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+}

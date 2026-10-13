@@ -1,0 +1,11 @@
+# Arquivos-fonte dos assets: ficam no disco local (e no OneDrive),
+# mas nao no repositorio. Regeraveis a partir do Veo 3 / Nano Banana.
+public/assets/**/*-source.*
+
+node_modules/
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+.DS_Store
+Thumbs.db
+*.log

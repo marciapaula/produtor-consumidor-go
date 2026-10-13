@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>CANAL — Direção de Arte &amp; Design Tokens</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Inter:opsz,wght@14..32,400..600&amp;display=swap">
+
+<link rel="stylesheet" href="./styles/tokens.css">
+<link rel="stylesheet" href="./styles/base.css">
+
+<style>
+@layer components {
+
+  .shell {
+    inline-size: min(100% - var(--gutter) * 2, var(--container));
+    margin-inline: auto;
+  }
+
+  /* ---------- Cabeçalho de seção: número da máquina + título editorial ---------- */
+
+  .band {
+    border-block-start: var(--hairline) solid var(--line);
+    padding-block: var(--space-2xl);
+  }
+
+  .band-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-sm);
+    margin-block-end: var(--space-xl);
+  }
+
+  @media (min-width: 60rem) {
+    .band-head {
+      grid-template-columns: 10rem minmax(0, 1fr);
+      gap: var(--space-lg);
+    }
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    font-weight: 500;
+    letter-spacing: var(--tracking-machine);
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+
+  .band-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    font-weight: 300;
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-display);
+    color: var(--fg-strong);
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .band-note {
+    max-inline-size: var(--measure);
+    color: var(--fg-muted);
+    margin-block-start: var(--space-sm);
+  }
+
+  /* ---------- Masthead ---------- */
+
+  .masthead {
+    min-block-size: 78dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-block: var(--space-2xl);
+  }
+
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: var(--fs-display);
+    font-weight: 300;
+    line-height: 0.92;
+    letter-spacing: -0.045em;
+    color: var(--fg-strong);
+    margin: 0;
+  }
+
+  .wordmark em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .masthead-lead {
+    max-inline-size: 46ch;
+    margin-block-start: var(--space-md);
+    font-size: var(--fs-lead);
+    color: var(--fg-muted);
+    text-wrap: pretty;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-lg);
+    margin-block-start: var(--space-xl);
+    padding-block-start: var(--space-sm);
+    border-block-start: var(--hairline) solid var(--line);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+
+  .meta b {
+    font-weight: 500;
+    color: var(--fg);
+  }
+
+  /* ---------- Paleta ---------- */
+
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: var(--space-sm);
+  }
+
+  .swatch {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-raised);
+    border: var(--hairline) solid var(--line);
+  }
+
+  .swatch-chip {
+    block-size: 5.5rem;
+    background-color: var(--chip);
+  }
+
+  .swatch-data {
+    padding: var(--space-xs);
+    display: grid;
+    gap: var(--space-3xs);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    line-height: 1.45;
+  }
+
+  .swatch-token {
+    color: var(--fg);
+    font-weight: 500;
+  }
+
+  .swatch-role,
+  .swatch-ratio {
+    color: var(--fg-subtle);
+  }
+
+  .badge {
+    justify-self: start;
+    padding: 0.1em 0.5em;
+    border: var(--hairline) solid currentColor;
+    font-size: 0.9em;
+    letter-spacing: var(--tracking-wide);
+  }
+
+  .badge[data-level="AAA"] { color: var(--accent-soft); }
+  .badge[data-level="AA"] { color: var(--hold-300); }
+  .badge[data-level="—"] { color: var(--fg-subtle); }
+
+  /* Legenda semântica: a gramática de cor das visualizações */
+  .grammar {
+    display: grid;
+    gap: var(--space-sm);
+    margin-block-start: var(--space-lg);
+  }
+
+  @media (min-width: 48rem) {
+    .grammar { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .grammar-item {
+    padding: var(--space-md);
+    background-color: var(--bg-raised);
+    border-inline-start: 2px solid var(--tint);
+  }
+
+  .grammar-item h3 {
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--tint);
+    margin-block-end: var(--space-2xs);
+  }
+
+  .grammar-item p {
+    font-size: var(--fs-small);
+    color: var(--fg-muted);
+    margin: 0;
+  }
+
+  /* ---------- Tipografia ---------- */
+
+  .voices {
+    display: grid;
+    gap: var(--space-lg);
+  }
+
+  .voice {
+    display: grid;
+    gap: var(--space-xs);
+    padding-block: var(--space-md);
+    border-block-start: var(--hairline) solid var(--line);
+  }
+
+  @media (min-width: 60rem) {
+    .voice {
+      grid-template-columns: 10rem minmax(0, 1fr);
+      gap: var(--space-lg);
+      align-items: baseline;
+    }
+  }
+
+  .voice-label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-machine);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+
+  .specimen-display {
+    font-family: var(--font-display);
+    font-size: var(--fs-h1);
+    font-weight: 300;
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-display);
+    color: var(--fg-strong);
+  }
+
+  .specimen-display i {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .specimen-body {
+    max-inline-size: var(--measure);
+    color: var(--fg);
+  }
+
+  .specimen-mono {
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    letter-spacing: var(--tracking-wide);
+    color: var(--accent-soft);
+  }
+
+  .scale-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-md);
+    padding-block: var(--space-2xs);
+    border-block-start: var(--hairline) solid var(--line);
+    overflow: hidden;
+  }
+
+  .scale-row span:first-child {
+    flex: 0 0 8.5rem;
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    color: var(--fg-subtle);
+  }
+
+  .scale-row span:last-child {
+    white-space: nowrap;
+    color: var(--fg-strong);
+  }
+
+  /* ---------- Movimento ---------- */
+
+  .curves {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--space-md);
+  }
+
+  .curve {
+    padding: var(--space-md);
+    background-color: var(--bg-raised);
+    border: var(--hairline) solid var(--line);
+  }
+
+  .curve svg {
+    inline-size: 100%;
+    block-size: auto;
+    overflow: visible;
+  }
+
+  .curve-path {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2.5;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .curve-guide {
+    fill: none;
+    stroke: var(--line-strong);
+    stroke-width: 1;
+    stroke-dasharray: 3 4;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .curve-name {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    color: var(--fg);
+    margin-block: var(--space-xs) var(--space-3xs);
+  }
+
+  .curve-use {
+    font-size: var(--fs-small);
+    color: var(--fg-subtle);
+    margin: 0;
+  }
+
+  .curve-track {
+    position: relative;
+    block-size: 2px;
+    margin-block-start: var(--space-md);
+    background-color: var(--line-strong);
+  }
+
+  .curve-dot {
+    position: absolute;
+    inset-block-start: 50%;
+    inline-size: 10px;
+    aspect-ratio: 1;
+    margin-block-start: -5px;
+    border-radius: 50%;
+    background-color: var(--accent);
+    box-shadow: var(--glow-flow);
+    animation: travel 2.4s var(--curve, linear) infinite;
+    --animation-reduced: none;
+  }
+
+  @keyframes travel {
+    0%, 8% { translate: 0 0; }
+    58%, 100% { translate: calc(100cqi - 10px) 0; }
+  }
+
+  .curve-track {
+    container-type: inline-size;
+  }
+
+  /* ---------- Átomos ---------- */
+
+  .atoms {
+    display: grid;
+    gap: var(--space-md);
+  }
+
+  @media (min-width: 48rem) {
+    .atoms { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .atom {
+    padding: var(--space-md);
+    background-color: var(--bg-raised);
+    border: var(--hairline) solid var(--line);
+    display: grid;
+    gap: var(--space-sm);
+    align-content: start;
+  }
+
+  .atom > h3 {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    font-weight: 500;
+    letter-spacing: var(--tracking-machine);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+
+  .btn {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    min-block-size: 44px;
+    padding-inline: var(--space-md);
+    background-color: transparent;
+    border: var(--hairline) solid var(--accent);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    text-decoration: none;
+    transition:
+      background-color var(--dur-ui) var(--ease-out-quart),
+      color var(--dur-ui) var(--ease-out-quart),
+      box-shadow var(--dur-ui) var(--ease-out-quart);
+  }
+
+  .btn:hover:not(:disabled) {
+    background-color: var(--accent);
+    color: var(--ink-1000);
+    box-shadow: var(--glow-flow);
+  }
+
+  .btn::after {
+    content: "→";
+    transition: translate var(--dur-ui) var(--ease-out-back);
+  }
+
+  .btn:hover::after {
+    translate: 4px 0;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+  }
+
+  .tag {
+    padding: 0.25em 0.7em;
+    border: var(--hairline) solid var(--tint, var(--line-strong));
+    color: var(--tint, var(--fg-muted));
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+  }
+
+  .code-block {
+    margin: 0;
+    padding: var(--space-sm);
+    background-color: var(--bg-sunken);
+    border: var(--hairline) solid var(--line);
+    overflow-x: auto;
+    font-size: var(--fs-small);
+    line-height: var(--leading-normal);
+    color: var(--fg);
+  }
+
+  .code-block .k { color: var(--accent-soft); }
+  .code-block .s { color: var(--hold-300); }
+  .code-block .c { color: var(--fg-subtle); font-style: italic; }
+
+  /* Célula de buffer: o motivo gráfico que vai reaparecer no site inteiro */
+  .buffer {
+    display: flex;
+    gap: var(--space-3xs);
+  }
+
+  .cell {
+    flex: 1;
+    aspect-ratio: 1;
+    border: var(--hairline) solid var(--line-strong);
+    background-color: transparent;
+    transition: background-color var(--dur-ui) var(--ease-out-quart);
+  }
+
+  .cell[data-state="full"] {
+    background-color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .cell[data-state="blocked"] {
+    background-color: var(--state-blocked);
+    border-color: var(--state-blocked);
+  }
+
+  .stat {
+    display: grid;
+    gap: var(--space-3xs);
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    font-weight: 300;
+    line-height: 1;
+    color: var(--accent);
+  }
+
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+
+  /* ---------- Harmonia com o vídeo ---------- */
+
+  .stage {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background-color: var(--bg-sunken);
+    border: var(--hairline) solid var(--line);
+  }
+
+  .stage video {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .stage-veil {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(in oklab, transparent 30%, oklch(0.145 0.008 240 / 0.85) 100%),
+      radial-gradient(120% 80% at 50% 50%, transparent 40%, oklch(0.11 0.006 240 / 0.7) 100%);
+  }
+
+  .stage-type {
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline: 0;
+    padding: var(--space-lg);
+  }
+
+  .stage-type h3 {
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    font-weight: 300;
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-display);
+    color: var(--fg-strong);
+    max-inline-size: 22ch;
+  }
+
+  .stage-type p {
+    margin-block-start: var(--space-2xs);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-machine);
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .colophon {
+    border-block-start: var(--hairline) solid var(--line);
+    padding-block: var(--space-lg) var(--space-2xl);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header class="shell masthead">
+  <p class="eyebrow">Sprint 01 · Direção de arte</p>
+  <h1 class="wordmark">CANAL<em>.</em></h1>
+  <p class="masthead-lead">
+    O sistema visual do seminário sobre o problema produtor–consumidor.
+    Não um tema aplicado sobre o conteúdo — uma gramática em que cada cor,
+    peso e curva já significa alguma coisa antes de qualquer texto ser lido.
+  </p>
+  <div class="meta">
+    <span><b>Tema</b> C1 · Produtor–Consumidor</span>
+    <span><b>Linguagem</b> Go</span>
+    <span><b>Seminário</b> 14.10.2026</span>
+    <span><b>Paradigma</b> Concorrente</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- 01 ---------------------------------------------------------------- -->
+  <section class="shell band">
+    <div class="band-head">
+      <p class="eyebrow">01 — Conceito</p>
+      <div>
+        <h2 class="band-title">A página não descreve um canal. Ela se comporta como um.</h2>
+        <p class="band-note">
+          O conteúdo entra em cena (produzido), acumula-se no campo de visão (bufferizado)
+          e é consumido conforme você rola — a rolagem é o consumidor. Três vozes tipográficas
+          sustentam a narrativa: o narrador acadêmico em serifa, a máquina em monoespaçada
+          e o texto de apoio em sem-serifa, que existe para desaparecer.
+        </p>
+      </div>
+    </div>
+
+    <div class="grammar">
+      <article class="grammar-item" style="--tint: var(--flow-500)">
+        <h3>Fluxo</h3>
+        <p>Dado em trânsito. Canal saudável, item entregue, concorrência funcionando. É o ciano oficial do Go — a única cor de marca do sistema.</p>
+      </article>
+      <article class="grammar-item" style="--tint: var(--hold-500)">
+        <h3>Espera</h3>
+        <p>Bloqueio legítimo. Buffer cheio, buffer vazio, goroutine estacionada na fila. Tensão — não é erro, é o sistema funcionando como projetado.</p>
+      </article>
+      <article class="grammar-item" style="--tint: var(--fault-500)">
+        <h3>Falha</h3>
+        <p>Estado inconsistente. Condição de corrida, impasse, dado corrompido. Aparece pouco, e sempre como consequência de sincronização mal projetada.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- 02 ---------------------------------------------------------------- -->
+  <section class="shell band">
+    <div class="band-head">
+      <p class="eyebrow">02 — Paleta</p>
+      <div>
+        <h2 class="band-title">Grafite frio, osso quente, uma única luz.</h2>
+        <p class="band-note">
+          O fundo nunca é preto puro: é um grafite de matiz fria, para que o ciano leia como
+          luz emitida e não como pigmento. O texto é levemente quente, e essa tensão
+          quente/frio é o que dá profundidade ao escuro. As razões de contraste abaixo são
+          medidas ao vivo no seu navegador, contra o fundo real da página.
+        </p>
+      </div>
+    </div>
+
+    <div class="swatches" id="swatches"></div>
+  </section>
+
+  <!-- 03 ---------------------------------------------------------------- -->
+  <section class="shell band">
+    <div class="band-head">
+      <p class="eyebrow">03 — Tipografia</p>
+      <div>
+        <h2 class="band-title">Três vozes, uma conversa.</h2>
+        <p class="band-note">
+          A serifa carrega a autoridade da monografia; a monoespaçada é a máquina relatando
+          seu próprio estado; a sem-serifa não tem personalidade por escolha — ela transporta
+          o argumento sem disputar atenção com ele.
+        </p>
+      </div>
+    </div>
+
+    <div class="voices">
+      <div class="voice">
+        <span class="voice-label">Display · Fraunces</span>
+        <p class="specimen-display">Compartilhe memória <i>comunicando</i></p>
+      </div>
+      <div class="voice">
+        <span class="voice-label">Corpo · Inter</span>
+        <p class="specimen-body">
+          Produtor e consumidor operam em velocidades distintas. O buffer de capacidade
+          finita existe exatamente para absorver essa diferença — e é justamente por ser
+          finito que ele impõe as duas condições críticas de sincronização: o produtor
+          precisa esperar quando não há espaço, e o consumidor precisa esperar quando não
+          há item.
+        </p>
+      </div>
+      <div class="voice">
+        <span class="voice-label">Máquina · IBM Plex Mono</span>
+        <p class="specimen-mono">PRODUTOR → ch &lt;- item → BUFFER [2/4] → &lt;-ch → CONSUMIDOR</p>
+      </div>
+    </div>
+
+    <div style="margin-block-start: var(--space-xl)">
+      <div class="scale-row"><span>--fs-display</span><span style="font-family: var(--font-display); font-weight: 300; font-size: var(--fs-display); letter-spacing: var(--tracking-display)">Concorrência</span></div>
+      <div class="scale-row"><span>--fs-h1</span><span style="font-family: var(--font-display); font-weight: 300; font-size: var(--fs-h1); letter-spacing: var(--tracking-display)">Buffer limitado</span></div>
+      <div class="scale-row"><span>--fs-h2</span><span style="font-family: var(--font-display); font-weight: 300; font-size: var(--fs-h2); letter-spacing: var(--tracking-display)">Goroutines e canais</span></div>
+      <div class="scale-row"><span>--fs-h3</span><span style="font-size: var(--fs-h3); font-weight: 500; letter-spacing: var(--tracking-tight)">Semântica de bloqueio</span></div>
+      <div class="scale-row"><span>--fs-lead</span><span style="font-size: var(--fs-lead)">Parágrafo de abertura</span></div>
+      <div class="scale-row"><span>--fs-body</span><span style="font-size: var(--fs-body)">Texto corrente do argumento</span></div>
+      <div class="scale-row"><span>--fs-small</span><span style="font-size: var(--fs-small)">Legenda e apoio</span></div>
+      <div class="scale-row"><span>--fs-micro</span><span style="font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--tracking-machine); text-transform: uppercase">Rótulo da máquina</span></div>
+    </div>
+  </section>
+
+  <!-- 04 ---------------------------------------------------------------- -->
+  <section class="shell band">
+    <div class="band-head">
+      <p class="eyebrow">04 — Movimento</p>
+      <div>
+        <h2 class="band-title">Quatro curvas, cada uma com um trabalho.</h2>
+        <p class="band-note">
+          Nenhuma animação do projeto usa <code>ease</code> genérico. As curvas abaixo são
+          lidas diretamente dos tokens CSS e desenhadas a partir deles — o que você vê é
+          literalmente o que o site vai usar.
+        </p>
+      </div>
+    </div>
+
+    <div class="curves" id="curves"></div>
+  </section>
+
+  <!-- 05 ---------------------------------------------------------------- -->
+  <section class="shell band">
+    <div class="band-head">
+      <p class="eyebrow">05 — Átomos</p>
+      <div>
+        <h2 class="band-title">As peças mínimas do sistema.</h2>
+        <p class="band-note">
+          Componentes deliberadamente austeros: sem cantos arredondados, sem sombras
+          decorativas, sem vidro fosco. A hierarquia vem de escala, espaço e hairline.
+        </p>
+      </div>
+    </div>
+
+    <div class="atoms">
+      <article class="atom">
+        <h3>Ação</h3>
+        <a class="btn" href="https://go.dev/play/" target="_blank" rel="noopener noreferrer">Executar no Playground</a>
+      </article>
+
+      <article class="atom">
+        <h3>Estados de concorrência</h3>
+        <div class="tags">
+          <span class="tag" style="--tint: var(--flow-500)">Em trânsito</span>
+          <span class="tag" style="--tint: var(--hold-500)">Bloqueado</span>
+          <span class="tag" style="--tint: var(--fault-500)">Corrida</span>
+          <span class="tag">Inativo</span>
+        </div>
+      </article>
+
+      <article class="atom">
+        <h3>Buffer — motivo gráfico recorrente</h3>
+        <div class="buffer" role="img" aria-label="Buffer de quatro posições: duas ocupadas, uma bloqueada, uma livre.">
+          <span class="cell" data-state="full"></span>
+          <span class="cell" data-state="full"></span>
+          <span class="cell" data-state="blocked"></span>
+          <span class="cell"></span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">2/4</span>
+          <span class="stat-label">qcount / dataqsiz</span>
+        </div>
+      </article>
+
+      <article class="atom">
+        <h3>Código</h3>
+<pre class="code-block"><code><span class="c">// buffer limitado, nativo</span>
+ch := <span class="k">make</span>(<span class="k">chan</span> <span class="k">int</span>, <span class="s">4</span>)
+
+<span class="k">go</span> produtor(ch)
+<span class="k">for</span> item := <span class="k">range</span> ch {
+    consumir(item)
+}</code></pre>
+      </article>
+    </div>
+  </section>
+
+  <!-- 06 ---------------------------------------------------------------- -->
+  <section class="shell band">
+    <div class="band-head">
+      <p class="eyebrow">06 — Harmonia</p>
+      <div>
+        <h2 class="band-title">O asset e o sistema falam a mesma língua.</h2>
+        <p class="band-note">
+          Teste decisivo da sprint: o vídeo gerado na Sprint 0 sobreposto à tipografia e ao
+          véu de gradiente reais. Se a cor do vídeo brigasse com a paleta, seria aqui que
+          apareceria.
+        </p>
+      </div>
+    </div>
+
+    <div class="stage">
+      <video src="./assets/video/hero-loop.mp4" poster="./assets/img/hero-poster.jpg"
+             autoplay muted loop playsinline aria-hidden="true"></video>
+      <div class="stage-veil"></div>
+      <div class="stage-type">
+        <h3>Não comunique compartilhando memória.</h3>
+        <p>01 — Abertura</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="shell colophon">
+  CANAL · Sprint 01 · Artefato interno de validação — não faz parte do site publicado
+</footer>
+
+<script type="module">
+  const root = document.documentElement;
+  const readToken = (name) => getComputedStyle(root).getPropertyValue(name).trim();
+
+  /* ---------- Contraste medido, não estimado ----------
+     Pinta a cor num canvas 1x1 para obter sRGB real, independentemente
+     de o token estar em oklch, hex ou qualquer outro formato. */
+  const probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+
+  function toRGB(color) {
+    probe.clearRect(0, 0, 1, 1);
+    probe.fillStyle = "#000";
+    probe.fillStyle = color;
+    probe.fillRect(0, 0, 1, 1);
+    const [r, g, b] = probe.getImageData(0, 0, 1, 1).data;
+    return [r, g, b];
+  }
+
+  function luminance(color) {
+    return toRGB(color)
+      .map((v) => v / 255)
+      .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
+      .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+  }
+
+  function contrast(a, b) {
+    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+
+  const palette = [
+    ["--ink-1000", "Vazio / fundo afundado"],
+    ["--ink-900", "Fundo da página"],
+    ["--ink-800", "Superfície elevada"],
+    ["--ink-700", "Superfície destacada"],
+    ["--ink-600", "Hairline"],
+    ["--ink-500", "Hairline forte"],
+    ["--bone-100", "Display"],
+    ["--bone-200", "Texto principal"],
+    ["--bone-400", "Texto secundário"],
+    ["--bone-500", "Texto terciário"],
+    ["--flow-300", "Acento claro"],
+    ["--flow-500", "Ciano Go · acento"],
+    ["--flow-700", "Acento profundo"],
+    ["--hold-500", "Estado: bloqueado"],
+    ["--fault-500", "Estado: falha"],
+  ];
+
+  const bg = readToken("--bg");
+
+  document.getElementById("swatches").innerHTML = palette
+    .map(([token, role]) => {
+      const value = readToken(token);
+      const ratio = contrast(value, bg);
+      const level = ratio >= 7 ? "AAA" : ratio >= 4.5 ? "AA" : "—";
+      return `
+        <figure class="swatch" style="--chip: var(${token})">
+          <div class="swatch-chip"></div>
+          <figcaption class="swatch-data">
+            <span class="swatch-token">${token}</span>
+            <span class="swatch-role">${role}</span>
+            <span class="swatch-ratio">${ratio.toFixed(2)}:1 sobre o fundo</span>
+            <span class="badge" data-level="${level}">${level === "—" ? "gráfico" : level}</span>
+          </figcaption>
+        </figure>`;
+    })
+    .join("");
+
+  /* ---------- Curvas desenhadas a partir dos próprios tokens ---------- */
+  const curves = [
+    ["--ease-out-expo", "Entradas cinematográficas e revelações de cena"],
+    ["--ease-out-quart", "Microinterações: hover, foco, botões"],
+    ["--ease-in-out-quint", "Transições simétricas entre dois estados"],
+    ["--ease-out-back", "Confirmação, com leve ultrapassagem"],
+  ];
+
+  document.getElementById("curves").innerHTML = curves
+    .map(([token, use]) => {
+      const value = readToken(token);
+      const [x1, y1, x2, y2] = value.match(/-?[\d.]+/g).map(Number);
+      const p = (n) => (n * 100).toFixed(1);
+      return `
+        <article class="curve">
+          <svg viewBox="-6 -64 112 172" role="img" aria-label="Curva ${value}">
+            <path class="curve-guide" d="M 0 100 L 100 0" />
+            <path class="curve-path"
+                  d="M 0 100 C ${p(x1)} ${p(1 - y1)}, ${p(x2)} ${p(1 - y2)}, 100 0" />
+          </svg>
+          <p class="curve-name">${token}</p>
+          <p class="curve-use">${use}</p>
+          <div class="curve-track">
+            <span class="curve-dot" style="--curve: ${value}"></span>
+          </div>
+        </article>`;
+    })
+    .join("");
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1302 @@
+/* ============================================================
+   CANAL — Visualizações
+   V1: produtor, buffer limitado e consumidor.
+   ============================================================ */
+
+@layer components {
+
+  .sim {
+    inline-size: 100%;
+    display: grid;
+    gap: var(--space-md);
+    padding: var(--space-md);
+  }
+
+  .sim-palco {
+    display: grid;
+    gap: var(--space-sm);
+    align-items: center;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @container (min-width: 34rem) {
+    .sim-palco {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: var(--space-md);
+    }
+  }
+
+  /* ---------- Atores ---------- */
+
+  .ator {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2xs);
+    text-align: center;
+  }
+
+  .ator-nome {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-machine);
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  /* Anel de progresso: quanto falta para o item ficar pronto.
+     Em bloqueio, vira um disco âmbar cheio — a espera é total. */
+  .ator-anel {
+    inline-size: 3.25rem;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background:
+      conic-gradient(var(--accent) calc(var(--progresso, 0) * 360deg), transparent 0),
+      radial-gradient(closest-side, var(--bg-raised) 68%, transparent 70%);
+    border: var(--hairline) solid var(--line-strong);
+    transition: border-color var(--dur-ui) var(--ease-out-quart);
+  }
+
+  .ator-anel[data-fase="bloqueado"] {
+    background:
+      conic-gradient(var(--state-blocked) 360deg, transparent 0),
+      radial-gradient(closest-side, var(--bg-raised) 68%, transparent 70%);
+    border-color: var(--state-blocked);
+  }
+
+  .ator-estado {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    color: var(--fg-subtle);
+    min-block-size: 2.4em;
+    max-inline-size: 12ch;
+  }
+
+  .ator-estado[data-fase="bloqueado"] {
+    color: var(--state-blocked);
+  }
+
+  /* ---------- Buffer ---------- */
+
+  .sim-meio {
+    display: grid;
+    gap: var(--space-2xs);
+    min-inline-size: 0;
+  }
+
+  .sim-meio .celulas {
+    gap: var(--space-3xs);
+  }
+
+  .sim-meio .celula {
+    min-inline-size: 0;
+    max-inline-size: 4.5rem;
+    transition:
+      background-color var(--dur-micro) var(--ease-out-quart),
+      border-color var(--dur-micro) var(--ease-out-quart);
+  }
+
+  .sim-leitura {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: 0.04em;
+    color: var(--fg-subtle);
+    text-align: center;
+  }
+
+  /* ---------- Trilhas de sincronização ----------
+     É aqui que os dois motores se diferenciam: com travas manuais a
+     trilha tem quatro passos que o programador escreveu; com canal,
+     tem um. */
+
+  .trilha {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3xs);
+    justify-content: center;
+  }
+
+  .passo {
+    padding: 0.15em 0.5em;
+    border: var(--hairline) solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--fg-subtle);
+    white-space: nowrap;
+    transition:
+      color var(--dur-micro) var(--ease-out-quart),
+      border-color var(--dur-micro) var(--ease-out-quart);
+  }
+
+  .trilha[data-pulso] .passo {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  /* ---------- Custo por item ---------- */
+
+  .sim-custo {
+    margin: 0;
+    padding-block-start: var(--space-xs);
+    border-block-start: var(--hairline) solid var(--line);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: 0.04em;
+    color: var(--fg-muted);
+    text-align: center;
+  }
+
+  .sim-custo b {
+    font-size: 1.6em;
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  /* ---------- Controles ---------- */
+
+  .sim-controles {
+    display: grid;
+    gap: var(--space-sm);
+    padding-block-start: var(--space-xs);
+    border-block-start: var(--hairline) solid var(--line);
+  }
+
+  @container (min-width: 34rem) {
+    .sim-controles { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .controle {
+    display: grid;
+    gap: var(--space-3xs);
+  }
+
+  .controle-nome {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: 0.04em;
+    color: var(--fg-subtle);
+  }
+
+  .controle-nome b {
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  .controle input[type="range"] {
+    inline-size: 100%;
+    min-block-size: 24px;
+    accent-color: var(--accent);
+  }
+}
+
+@layer components {
+
+  /* ==========================================================
+     V2 — Condição de corrida
+     ========================================================== */
+
+  .corrida,
+  .impasse,
+  .travas {
+    inline-size: 100%;
+    display: grid;
+    gap: var(--space-md);
+    padding: var(--space-md);
+  }
+
+  .corrida-mesa {
+    display: grid;
+    gap: var(--space-sm);
+    align-items: center;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @container (min-width: 34rem) {
+    .corrida-mesa { grid-template-columns: 1fr auto 1fr; gap: var(--space-md); }
+  }
+
+  .corrida-thread,
+  .impasse-ator {
+    display: grid;
+    gap: var(--space-2xs);
+    justify-items: start;
+  }
+
+  .thread-nome {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-machine);
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  .thread-codigo {
+    display: grid;
+    gap: 2px;
+    inline-size: 100%;
+  }
+
+  .linha {
+    padding: 0.35em 0.6em;
+    border-inline-start: 2px solid var(--line);
+    background-color: var(--bg-sunken);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    color: var(--fg-subtle);
+    transition:
+      color var(--dur-micro) var(--ease-out-quart),
+      border-color var(--dur-micro) var(--ease-out-quart),
+      background-color var(--dur-micro) var(--ease-out-quart);
+  }
+
+  .linha[data-estado="feita"] {
+    color: var(--fg-muted);
+    border-inline-start-color: var(--accent-deep);
+  }
+
+  .linha[data-estado="proxima"] {
+    color: var(--accent);
+    border-inline-start-color: var(--accent);
+    background-color: var(--bg-elevated);
+  }
+
+  .linha[data-estado="bloqueada"] {
+    color: var(--state-blocked);
+    border-inline-start-color: var(--state-blocked);
+    background-color: var(--bg-elevated);
+  }
+
+  .thread-reg {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    color: var(--fg-subtle);
+  }
+
+  .thread-reg b {
+    font-weight: 500;
+    color: var(--fg-strong);
+  }
+
+  .corrida-memoria {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-3xs);
+    padding: var(--space-sm) var(--space-md);
+    border: var(--hairline) solid var(--line-strong);
+    background-color: var(--bg-sunken);
+  }
+
+  .memoria-rotulo,
+  .memoria-nome {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+    text-align: center;
+  }
+
+  .memoria-valor {
+    font-family: var(--font-display);
+    font-size: var(--fs-h1);
+    font-weight: 300;
+    line-height: 1;
+    color: var(--accent);
+  }
+
+  .corrida-veredito,
+  .impasse-estado {
+    margin: 0;
+    padding: var(--space-xs) var(--space-sm);
+    border-inline-start: 2px solid var(--line-strong);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    line-height: var(--leading-normal);
+    color: var(--fg-muted);
+    min-block-size: 3.4em;
+  }
+
+  .corrida-veredito[data-tom="certo"] {
+    border-inline-start-color: var(--accent);
+    color: var(--accent-soft);
+  }
+
+  .corrida-veredito[data-tom="errado"],
+  .impasse-estado[data-tom="impasse"] {
+    border-inline-start-color: var(--state-fault);
+    color: var(--fault-300);
+  }
+
+  .impasse-estado[data-tom="espera"] {
+    border-inline-start-color: var(--state-blocked);
+    color: var(--hold-300);
+  }
+
+  .corrida-controles,
+  .impasse-controles,
+  .impasse-ordem {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    align-items: center;
+  }
+
+  .corrida-controles .botao,
+  .impasse-controles .botao {
+    font-size: var(--fs-micro);
+    padding-inline: var(--space-sm);
+  }
+
+  .botao:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .corrida-placar,
+  .impasse-passos {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    color: var(--fg-subtle);
+  }
+
+  .impasse-passos b {
+    font-weight: 500;
+    color: var(--fg-strong);
+  }
+
+  /* ==========================================================
+     V3 — Impasse
+     ========================================================== */
+
+  .alternativa {
+    min-block-size: 44px;
+    padding-inline: var(--space-sm);
+    border: var(--hairline) solid var(--line-strong);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    transition:
+      color var(--dur-ui) var(--ease-out-quart),
+      border-color var(--dur-ui) var(--ease-out-quart);
+  }
+
+  .alternativa[aria-pressed="true"] {
+    border-color: var(--state-fault);
+    color: var(--fault-300);
+  }
+
+  .impasse-mesa {
+    display: grid;
+    gap: var(--space-sm);
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @container (min-width: 40rem) {
+    .impasse-mesa { grid-template-columns: 1fr auto 1fr; gap: var(--space-md); }
+  }
+
+  .impasse-recursos {
+    display: grid;
+    gap: var(--space-3xs);
+    padding: var(--space-sm);
+    border: var(--hairline) solid var(--line-strong);
+    background-color: var(--bg-sunken);
+    min-inline-size: 11rem;
+  }
+
+  .recurso {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+  }
+
+  .recurso-nome { color: var(--fg-subtle); }
+  .recurso-valor { color: var(--fg-strong); }
+  .recurso-valor[data-tom="ocupado"] { color: var(--state-blocked); }
+
+  .impasse-estado code {
+    padding: 0.1em 0.3em;
+    border: var(--hairline) solid var(--line);
+    color: inherit;
+  }
+}
+
+@layer components {
+  .corrida-fato {
+    margin: 0;
+    padding-block-start: var(--space-xs);
+    border-block-start: var(--hairline) solid var(--line);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    line-height: var(--leading-normal);
+    color: var(--fg-muted);
+  }
+
+  .corrida-fato b {
+    font-weight: 500;
+    color: var(--state-fault);
+  }
+}
+
+@layer components {
+
+  /* ==========================================================
+     V6 — Anatomia do hchan
+     ========================================================== */
+
+  .hchan,
+  .canal,
+  .topologia {
+    inline-size: 100%;
+    display: grid;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+  }
+
+  .hchan-campos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+  }
+
+  .campo {
+    display: flex;
+    gap: var(--space-2xs);
+    padding: 0.2em 0.6em;
+    border: var(--hairline) solid var(--line);
+    background-color: var(--bg-sunken);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+  }
+
+  .campo-nome { color: var(--fg-subtle); }
+  .campo-valor { color: var(--accent); font-weight: 500; }
+  .campo-valor[data-tom="fechado"] { color: var(--state-fault); }
+
+  .hchan-anel {
+    display: grid;
+    gap: var(--space-3xs);
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .slot {
+    display: grid;
+    gap: 2px;
+    justify-items: center;
+    padding: var(--space-2xs);
+    border: var(--hairline) solid var(--line-strong);
+    background-color: var(--bg-sunken);
+    transition: border-color var(--dur-ui) var(--ease-out-quart);
+  }
+
+  .slot[data-ocupado="true"] {
+    border-color: var(--accent);
+    background-color: var(--accent-deep);
+  }
+
+  .slot-indice,
+  .slot-marca {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.04em;
+    color: var(--fg-subtle);
+    min-block-size: 1em;
+  }
+
+  .slot-marca { color: var(--hold-300); }
+
+  .slot-valor {
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    font-weight: 300;
+    line-height: 1.1;
+    color: var(--fg-strong);
+  }
+
+  .hchan-filas,
+  .canal-mesa {
+    display: grid;
+    gap: var(--space-sm);
+  }
+
+  @container (min-width: 32rem) {
+    .hchan-filas { grid-template-columns: 1fr 1fr; }
+    .canal-mesa { grid-template-columns: 1fr auto 1fr; align-items: center; }
+  }
+
+  .fila,
+  .canal-lado {
+    display: grid;
+    gap: var(--space-3xs);
+    align-content: start;
+  }
+
+  .fila-nome {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  .fila-nome i {
+    font-style: normal;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--fg-subtle);
+  }
+
+  .fila-itens,
+  .canal-parados {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3xs);
+    min-block-size: 2.2em;
+    align-content: start;
+  }
+
+  .sudog,
+  .parada {
+    padding: 0.2em 0.5em;
+    border: var(--hairline) solid var(--state-blocked);
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--hold-300);
+  }
+
+  .fila-vazia {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--fg-subtle);
+  }
+
+  .hchan-log,
+  .canal-log {
+    margin: 0;
+    padding: var(--space-xs) var(--space-sm);
+    border-inline-start: 2px solid var(--line-strong);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    line-height: var(--leading-normal);
+    color: var(--fg-muted);
+    min-block-size: 4.2em;
+  }
+
+  .hchan-log[data-caminho="direto"],
+  .canal-log[data-tom="encontro"] {
+    border-inline-start-color: var(--accent);
+    color: var(--accent-soft);
+  }
+
+  .hchan-log[data-caminho="bloqueio"],
+  .canal-log[data-tom="bloqueio"] {
+    border-inline-start-color: var(--state-blocked);
+    color: var(--hold-300);
+  }
+
+  .hchan-log[data-caminho="falha"] {
+    border-inline-start-color: var(--state-fault);
+    color: var(--fault-300);
+  }
+
+  .hchan-controles,
+  .canal-controles,
+  .canal-modo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+  }
+
+  .hchan-controles .botao,
+  .canal-controles .botao { font-size: var(--fs-micro); padding-inline: var(--space-sm); }
+
+  .hchan-aviso {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    line-height: var(--leading-normal);
+    color: var(--fg-subtle);
+  }
+
+  .hchan-aviso code { color: var(--fg-muted); }
+
+  /* ==========================================================
+     V5 — Rendezvous e topologia
+     ========================================================== */
+
+  .alternativa--canal[aria-pressed="true"] {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .canal-tubo {
+    display: grid;
+    gap: var(--space-3xs);
+    justify-items: center;
+    padding: var(--space-sm);
+    border: var(--hairline) solid var(--line-strong);
+    background-color: var(--bg-sunken);
+    min-inline-size: 11rem;
+  }
+
+  .canal-celulas {
+    display: flex;
+    gap: var(--space-3xs);
+  }
+
+  .canal-celulas .celula {
+    inline-size: 2.6rem;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    color: var(--ink-1000);
+  }
+
+  .canal-sembuffer {
+    max-inline-size: 16ch;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    line-height: var(--leading-normal);
+    color: var(--hold-300);
+    text-align: center;
+  }
+
+  .canal-cap {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: var(--tracking-wide);
+    color: var(--fg-subtle);
+  }
+
+  .topologia-svg {
+    inline-size: 100%;
+    max-block-size: 15rem;
+  }
+
+  .topo-nos circle {
+    fill: var(--bg-elevated);
+    stroke: var(--accent);
+    stroke-width: 1.5;
+  }
+
+  .topo-ligacoes line {
+    stroke-width: 1.5;
+    transition: opacity var(--dur-reveal) var(--ease-out-quart);
+  }
+
+  .topo-ligacoes--compartilhada line { stroke: var(--state-fault); }
+  .topo-ligacoes--csp line { stroke: var(--accent); }
+
+  .topo-memoria {
+    fill: var(--bg-elevated);
+    stroke: var(--state-fault);
+    stroke-width: 1.5;
+    transition: opacity var(--dur-reveal) var(--ease-out-quart);
+  }
+
+  .topo-rotulo-memoria {
+    fill: var(--fault-300);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    transition: opacity var(--dur-reveal) var(--ease-out-quart);
+  }
+
+  [data-estado="compartilhada"] .topo-ligacoes--csp { opacity: 0; }
+  [data-estado="csp"] .topo-ligacoes--compartilhada,
+  [data-estado="csp"] .topo-memoria,
+  [data-estado="csp"] .topo-rotulo-memoria { opacity: 0; }
+}
+
+@layer components {
+
+  /* ==========================================================
+     V4 — Primitivas tradicionais (cena 05: memória compartilhada)
+     A cena 07 (as travas) reaproveita .impasse-mesa/.impasse-ator/
+     .impasse-recursos/.thread-codigo/.linha, já definidos na V3.
+     ========================================================== */
+
+  .compartilhada {
+    inline-size: 100%;
+    display: grid;
+    gap: var(--space-md);
+    padding: var(--space-md);
+  }
+
+  .compartilhada-atores {
+    display: grid;
+    gap: var(--space-sm);
+    align-items: center;
+    justify-items: center;
+    grid-template-columns: minmax(0, 1fr);
+    text-align: center;
+  }
+
+  @container (min-width: 34rem) {
+    .compartilhada-atores {
+      grid-template-columns: 1fr auto 1fr;
+      gap: var(--space-md);
+    }
+
+    .ator-rotulo[data-papel="produtor"] { justify-items: end; text-align: end; }
+    .ator-rotulo[data-papel="consumidor"] { justify-items: start; text-align: start; }
+  }
+
+  .ator-rotulo {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-3xs);
+  }
+
+  .ator-acao {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    color: var(--fg-subtle);
+  }
+
+  .ator-acao code { color: var(--fg-muted); }
+
+  .compartilhada-buffer {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2xs);
+  }
+
+  .compartilhada-buffer .celulas {
+    min-inline-size: 12rem;
+    max-inline-size: 18rem;
+  }
+
+  .compartilhada-legenda {
+    margin: 0;
+    max-inline-size: 24ch;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.02em;
+    line-height: var(--leading-normal);
+    color: var(--fg-subtle);
+    text-align: center;
+  }
+
+  /* Terceiro tom de célula, ao lado de "cheia" (V1, preenchimento sólido)
+     e "corrompida" (V2, preenchimento sólido em outro matiz): tocada para
+     leitura. Não varia só a intensidade do mesmo ciano — depender de
+     tom/opacidade para diferenciar dois estados falha para quem tem baixa
+     visão. O padrão listrado muda a forma, não só a cor. */
+  .celula[data-estado="lida"] {
+    border-color: var(--accent-soft);
+    background-image: repeating-linear-gradient(
+      45deg,
+      var(--accent-soft) 0 2px,
+      transparent 2px 6px
+    );
+  }
+
+  .compartilhada-log {
+    margin: 0;
+    padding: var(--space-xs) var(--space-sm);
+    border-inline-start: 2px solid var(--line-strong);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    line-height: var(--leading-normal);
+    color: var(--fg-muted);
+    min-block-size: 3.4em;
+  }
+
+  .compartilhada-log[data-tom="colisao"] {
+    border-inline-start-color: var(--state-fault);
+    color: var(--fault-300);
+  }
+}
+
+@layer components {
+
+  /* ==========================================================
+     Blocos de código com realce próprio (cena 09: C×Java;
+     V10 / cena 18: C×Java×Go)
+     ========================================================== */
+
+  .comparacao-livre {
+    inline-size: 100%;
+    padding: var(--space-md);
+  }
+
+  .comparacao-colunas {
+    display: grid;
+    gap: var(--space-lg);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @container (min-width: 34rem) {
+    .comparacao-colunas[data-colunas="2"] {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @container (min-width: 46rem) {
+    .comparacao-colunas[data-colunas="3"] {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .comparacao-coluna {
+    display: grid;
+    gap: var(--space-2xs);
+    align-content: start;
+    transition: opacity var(--dur-ui) var(--ease-out-quart);
+  }
+
+  /* Spotlight: passar o mouse ou focar uma coluna esmaece as outras —
+     interação pequena, sem depender de clique, que ajuda a comparar
+     uma linguagem de cada vez em vez de ler as três ao mesmo tempo. */
+  .comparacao-colunas:hover .comparacao-coluna:not(:hover),
+  .comparacao-colunas:focus-within .comparacao-coluna:not(:focus-within) {
+    opacity: 0.45;
+  }
+
+  .comparacao-coluna:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 6px;
+  }
+
+  .comparacao-rotulo {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-machine);
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  .comparacao-coluna .codigo {
+    font-size: 0.8rem;
+    line-height: var(--leading-relaxed);
+    /* Sem scroll horizontal escondido: a linha mais longa do C não cabe
+       numa coluna de três sem quebrar. */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .comparacao-custo {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    color: var(--fg-subtle);
+  }
+
+  .comparacao-custo b {
+    font-size: 1.4em;
+    font-weight: 500;
+    color: var(--fault-300);
+  }
+
+  /* Zero chamadas: o mesmo argumento visual do V1 (Ato III), agora em
+     número — sem texto declarando vencedor. */
+  .comparacao-custo[data-zero] b {
+    color: var(--accent);
+  }
+}
+
+@layer components {
+
+  /* ==========================================================
+     V9 — Ciclo de vida do canal (cena 15)
+     ========================================================== */
+
+  .ciclo-vida {
+    inline-size: 100%;
+    display: grid;
+    gap: var(--space-lg);
+    padding: var(--space-md);
+  }
+
+  @container (min-width: 40rem) {
+    .ciclo-vida {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .ciclo-secao {
+    display: grid;
+    gap: var(--space-sm);
+    align-content: start;
+  }
+
+  .ciclo-rotulo {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-machine);
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  .ciclo-canal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .ciclo-log {
+    margin: 0;
+    padding: var(--space-xs) var(--space-sm);
+    border-inline-start: 2px solid var(--line-strong);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    line-height: var(--leading-normal);
+    color: var(--fg-muted);
+    min-block-size: 3.4em;
+  }
+
+  .ciclo-log[data-tom="fechado"] {
+    border-inline-start-color: var(--state-fault);
+    color: var(--fault-300);
+  }
+
+  .ciclo-log[data-tom="encerra"] {
+    border-inline-start-color: var(--accent);
+    color: var(--accent-soft);
+  }
+
+  /* Sublinhado ondulado: o gesto universal de "isto não compila",
+     não uma cor de fundo que se confunda com estado de execução. */
+  .linha-invalida {
+    text-decoration: underline wavy var(--state-fault);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+  }
+
+  .erro-compilacao {
+    display: grid;
+    gap: var(--space-2xs);
+    padding: var(--space-sm);
+    background-color: var(--bg-sunken);
+    border-inline-start: 2px solid var(--state-fault);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    line-height: var(--leading-normal);
+  }
+
+  .erro-linha,
+  .erro-texto,
+  .erro-nota {
+    margin: 0;
+  }
+
+  .erro-prompt {
+    color: var(--fg-subtle);
+  }
+
+  .erro-prompt::after {
+    content: "█";
+    margin-inline-start: 0.15em;
+    color: var(--accent);
+    animation: cursor-pisca 1s step-end infinite;
+  }
+
+  @keyframes cursor-pisca {
+    50% { opacity: 0; }
+  }
+
+  .erro-texto {
+    color: var(--fault-300);
+    overflow-wrap: anywhere;
+  }
+
+  .erro-nota {
+    color: var(--fg-subtle);
+  }
+}
+
+@layer components {
+
+  /* ==========================================================
+     Demonstração prática (cena 17)
+     ========================================================== */
+
+  .demo {
+    inline-size: 100%;
+    padding: var(--space-md);
+  }
+
+  .demo-abas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    margin-block-end: var(--space-md);
+  }
+
+  .demo-aba {
+    min-block-size: 44px;
+    padding-inline: var(--space-md);
+    border: var(--hairline) solid var(--line-strong);
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    transition:
+      color var(--dur-ui) var(--ease-out-quart),
+      border-color var(--dur-ui) var(--ease-out-quart);
+  }
+
+  .demo-aba[aria-selected="true"] {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* :not([hidden]) importa: display:grid do autor tem a mesma
+     especificidade do [hidden]{display:none} do navegador, e origem de
+     autor sempre vence — sem isto os três painéis empilhavam juntos,
+     visíveis ao mesmo tempo, independente da aba selecionada. */
+  .demo-painel:not([hidden]) {
+    display: grid;
+    gap: var(--space-sm);
+  }
+
+  .demo-codigo {
+    max-block-size: 22rem;
+    overflow-y: auto;
+  }
+
+  .demo-observar {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    color: var(--fg-subtle);
+  }
+
+  .demo-observar code {
+    padding: 0.1em 0.3em;
+    background-color: var(--bg-raised);
+    border: var(--hairline) solid var(--line);
+    color: var(--accent-soft);
+  }
+
+  .demo-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+  }
+
+  .demo-editor:not(:empty) {
+    margin-block-start: var(--space-2xs);
+    border: var(--hairline) solid var(--line);
+  }
+
+  .demo-iframe {
+    inline-size: 100%;
+    block-size: 32rem;
+    border: 0;
+  }
+}
+
+@layer components {
+
+  /* ==========================================================
+     V7 + V8 — Escala goroutine×thread e escalonador GMP (cena 12)
+     ========================================================== */
+
+  .escalonador {
+    inline-size: 100%;
+    display: grid;
+    gap: var(--space-lg);
+    padding: var(--space-md);
+  }
+
+  .escala {
+    display: grid;
+    gap: var(--space-sm);
+  }
+
+  .escala-barra {
+    display: grid;
+    grid-template-columns: 9rem 1fr 5rem;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .escala-rotulo {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    color: var(--fg-muted);
+  }
+
+  .escala-trilha {
+    block-size: 0.6rem;
+    background-color: var(--bg-sunken);
+    border: var(--hairline) solid var(--line);
+  }
+
+  .escala-preenchimento {
+    block-size: 100%;
+    /* Largura mínima de 2px: a proporção real da goroutine é quase zero
+       (2 KB contra 8 MB) — sem piso ela some da tela, e é exatamente
+       essa desproporção que a barra existe pra mostrar. */
+    inline-size: max(2px, calc(var(--proporcao) * 100%));
+    background-color: var(--accent);
+  }
+
+  .escala-valor {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    text-align: end;
+    color: var(--fg-strong);
+  }
+
+  .escala-nota {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    line-height: var(--leading-normal);
+    color: var(--fg-subtle);
+  }
+
+  .escala-nota code {
+    padding: 0.1em 0.3em;
+    background-color: var(--bg-raised);
+    border: var(--hairline) solid var(--line);
+    color: var(--accent-soft);
+  }
+
+  .gmp {
+    display: grid;
+    gap: var(--space-sm);
+    padding-block-start: var(--space-sm);
+    border-block-start: var(--hairline) solid var(--line);
+  }
+
+  .gmp-legenda {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    color: var(--fg-muted);
+  }
+
+  .gmp-processadores {
+    display: grid;
+    gap: var(--space-md);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @container (min-width: 34rem) {
+    .gmp-processadores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  .gmp-p {
+    display: grid;
+    gap: var(--space-2xs);
+    padding: var(--space-sm);
+    background-color: var(--bg-sunken);
+    border: var(--hairline) solid var(--line-strong);
+  }
+
+  .gmp-rotulo {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    color: var(--accent-soft);
+  }
+
+  .gmp-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3xs);
+    min-block-size: 1.6rem;
+  }
+
+  .gmp-g {
+    inline-size: 1.1rem;
+    block-size: 1.1rem;
+    border: var(--hairline) solid var(--line-strong);
+  }
+
+  .gmp-m {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    padding-block-start: var(--space-2xs);
+    border-block-start: var(--hairline) dashed var(--line);
+  }
+
+  .gmp-rotulo-m {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    color: var(--fg-subtle);
+  }
+
+  .gmp-g--executando {
+    background-color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .gmp-nota {
+    margin: 0;
+    max-inline-size: var(--measure);
+    font-size: var(--fs-small);
+    color: var(--fg-muted);
+  }
+
+  /* ---------- Síntese: fechamento da cena 19 ---------- */
+
+  .sintese-numeros {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+    column-gap: var(--space-2xl);
+    row-gap: var(--space-lg);
+    margin-block-start: var(--space-2xl);
+  }
+
+  .sintese-item {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2xs);
+  }
+
+  .sintese-valor {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: var(--fs-h1);
+    line-height: 1;
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sintese-rotulo {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-machine);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+
+  /* O zero de Go domina a composição — a única das três colunas na
+     escala do próprio título da abertura, com o brilho do canal. */
+  .sintese-item--go .sintese-valor {
+    font-size: var(--fs-display);
+    color: var(--accent);
+    text-shadow: var(--glow-flow);
+  }
+
+  .sintese-item--go .sintese-rotulo {
+    color: var(--accent-soft);
+  }
+
+  .sintese-legenda {
+    inline-size: 100%;
+    margin-block-start: var(--space-lg);
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    color: var(--fg-subtle);
+    text-align: center;
+  }
+}
