@@ -17,7 +17,7 @@
 ## Execução do Código
 
 - **Ambiente Online Utilizado:** Go Playground (go.dev/play)
-- **Permalink:** [https://go.dev/play/p/ECVgIV7MZx0](https://go.dev/play/p/ECVgIV7MZx0)
+- **Permalink:** [https://go.dev/play/p/gJwv2ypibzx](https://go.dev/play/p/gJwv2ypibzx)
 - **Site de apoio do seminário:** [https://prodconsumer.web.app](https://prodconsumer.web.app)
 
 ### Instruções de Teste (Entrada e Saída)
@@ -33,12 +33,14 @@ A execução foi desenhada em duas fases, para que as duas condições críticas
 
 Cenários para alterar e observar:
 
-| Alteração               | O que acontece                                                                                           |
-| ----------------------- | -------------------------------------------------------------------------------------------------------- |
-| `capacidade = 1`        | O produtor espera a cada item da rajada.                                                                 |
-| `capacidade = 10`       | O canal nunca enche e o produtor nunca espera.                                                           |
-| `consumidores = 1`      | O consumo fica mais lento que a produção e a fila cresce.                                                |
-| Comentar `close(canal)` | O laço `range` nunca termina e o runtime aborta com `fatal error: all goroutines are asleep - deadlock!` |
+| Alteração                                           | O que acontece                                                                                           |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `capacidade = 1`                                    | O produtor espera a cada item da rajada.                                                                 |
+| `capacidade = 10`                                   | O canal nunca enche e o produtor nunca espera.                                                           |
+| `consumidores = 1`                                  | Na rajada o canal fica cheio por mais tempo e o produtor espera várias vezes.                            |
+| Comentar `close(canal)` e o `registrar` logo abaixo | O laço `range` nunca termina e o runtime aborta com `fatal error: all goroutines are asleep - deadlock!` |
+
+No último cenário, o `registrar` logo abaixo de `close(canal)` também deve ser comentado: sozinho, ele anunciaria no log um fechamento que não aconteceu.
 
 **Entrada de Exemplo:**
 
@@ -62,7 +64,7 @@ const (
 text
 
 ```text
-Produtor-consumidor em Go | canal de 3 | 10 itens | 2 consumidores
+Produtor-consumidor em Go | canal de 3 | 10 itens | consumidores: 2
 
 --- FASE 1: produção lenta, os consumidores vão esperar ---
 [ 0.35s] Produtor     | canal 0/3 | produziu o item 1
