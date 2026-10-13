@@ -1,3 +1,12 @@
+## Avaliação A2 - Paradigmas de Linguagens de Programação
+
+### Grupo 01
+
+#### Integrantes (3 a 5 alunos)
+- Andrei Rodrigues de Barros (33468982)
+- Gabriel Silva Medeiros (32825706)
+- Márcia Paula de Sousa (35835133)
+
 ## Definição do Tema
 
 - **Paradigma:** Concorrente
