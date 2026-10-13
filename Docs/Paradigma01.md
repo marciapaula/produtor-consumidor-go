@@ -19,7 +19,6 @@ A linguagem Go propõe outro caminho. Em vez de proteger melhor a memória compa
 O texto segue a divisão de pesquisa adotada pelo grupo. A seção 2 trata da fundamentação teórica, a seção 3 da filosofia de concorrência em Go e a seção 4 da implementação prática e da análise comparativa.
 
 
-
 ## 2 Fundamentação teórica 
 
 ### 2.1 O cenário e os três papéis
@@ -61,9 +60,9 @@ Tanenbaum e Bos (2016) recorrem a um cenário específico para mostrar por que s
 
 ### 2.4 A abordagem tradicional
 
-A solução clássica combina três mecanismos. O primeiro são os semáforos contadores. Um semáforo é, conceitualmente, um contador de recursos com duas operações atômicas: `down`, que decrementa o valor ou bloqueia a thread caso ele já seja zero, e `up`, que incrementa e acorda uma thread porventura bloqueada. A solução emprega dois semáforos desse tipo: `empty`, inicializado com N, conta os espaços livres, e `full`, inicializado com zero, conta os itens disponíveis. Como o valor fica armazenado no contador, o problema do sinal perdido desaparece.
+A solução clássica tem duas variantes: semáforos, como em Tanenbaum e Bos (2016), ou mutex com variáveis de condição, como em Pthreads. A primeira usa semáforos contadores. Um semáforo é, conceitualmente, um contador de recursos com duas operações atômicas: `down`, que decrementa o valor ou bloqueia a thread caso ele já seja zero, e `up`, que incrementa e acorda uma thread porventura bloqueada. A solução emprega dois semáforos desse tipo: `empty`, inicializado com N, conta os espaços livres, e `full`, inicializado com zero, conta os itens disponíveis. Como o valor fica armazenado no contador, o problema do sinal perdido desaparece.
 
-O segundo mecanismo é o semáforo binário, ou mutex, inicializado em um, que garante a exclusão mútua e assegura que apenas uma thread por vez manipule o buffer e seus índices. O esqueleto da solução assume então a forma abaixo.
+Completa essa variante o semáforo binário, ou mutex, inicializado em um, que garante a exclusão mútua e assegura que apenas uma thread por vez manipule o buffer e seus índices. O esqueleto da solução assume então a forma abaixo.
 
 ```c
 void produtor() {                    void consumidor() {
@@ -78,7 +77,7 @@ void produtor() {                    void consumidor() {
 }                                    }
 ```
 
-O terceiro mecanismo são as variáveis de condição. Em Pthreads, a mesma coordenação costuma ser escrita com um `pthread_mutex_t` e duas variáveis de condição. A operação `pthread_cond_wait` libera o mutex e suspende a thread de forma atômica, resolvendo por outro caminho o problema do sinal perdido.
+A segunda variante usa variáveis de condição. Em Pthreads, a mesma coordenação costuma ser escrita com um `pthread_mutex_t` e duas variáveis de condição. A operação `pthread_cond_wait` libera o mutex e suspende a thread de forma atômica, resolvendo por outro caminho o problema do sinal perdido.
 
 ```c
 pthread_mutex_lock(&trava);
@@ -122,13 +121,13 @@ A diferença em relação ao modelo tradicional é de natureza, e não de grau. 
 
 A passagem do CSP de formalismo matemático para construção nativa de uma linguagem de uso corrente levou décadas e ocorreu em grande parte no Bell Labs. Na década de 1980, Luca Cardelli e Rob Pike desenvolveram a linguagem Squeak, aplicando o CSP à comunicação com dispositivos de entrada em interfaces gráficas. Em 1989 veio Newsqueak, que tratou canais como objetos de primeira classe e permitiu criar processos e canais dinamicamente em tempo de execução. Nos anos 1990 seguiram-se as linguagens Alef e Limbo. Em 2007, no Google, Robert Griesemer, Rob Pike e Ken Thompson iniciaram o projeto de Go, anunciado publicamente em 2009, que uniu a sintaxe da família C a essa herança de concorrência baseada em CSP.
 
-A filosofia da linguagem é resumida em uma frase: "Não comunique compartilhando memória; em vez disso, compartilhe memória comunicando". A frase consta do documento *Effective Go*, da documentação oficial, e foi divulgada no artigo *Share Memory By Communicating*, publicado por Andrew Gerrand no blog oficial de Go em 2010. Parte do material consultado durante a pesquisa atribuía o lema a Rob Pike; a verificação nas fontes primárias mostrou que a autoria pertence ao *Effective Go*, e a atribuição foi corrigida neste relatório.
+A filosofia da linguagem é resumida em uma frase: "Não comunique compartilhando memória; em vez disso, compartilhe memória comunicando". A frase consta do documento *Effective Go*, da documentação oficial, e foi divulgada no artigo *Share Memory By Communicating*, publicado por Andrew Gerrand no blog oficial de Go em 2010; depois, foi retomada por Rob Pike entre os *Go Proverbs*, em 2015. Parte do material consultado durante a pesquisa atribuía o lema apenas a Rob Pike; como o *Effective Go* é a fonte escrita mais antiga localizada, o relatório o cita como fonte, em vez de atribuir a frase a uma pessoa.
 
 O conteúdo do lema é a transferência de propriedade. Em lugar de duas unidades de execução acessarem o mesmo dado sob proteção de uma trava, o dado viaja pelo canal: quem enviou deixa de usá-lo e quem recebeu passa a ser responsável por ele. Registre-se, porém, que essa transferência é uma disciplina que o canal facilita, e não uma proibição imposta pelo compilador. Nada impede que um programa envie um ponteiro por um canal e continue alterando o dado apontado, caso em que a memória volta a ser compartilhada, com todos os riscos decorrentes.
 
 ### 3.3 Goroutines e o escalonador
 
-Uma goroutine é a unidade de execução concorrente de Go, criada com a palavra-chave `go`, como em `go produtor(canal)`. Ela não é uma thread do sistema operacional, mas uma unidade gerenciada pelo *runtime* da linguagem no espaço de usuário. Na implementação atual, começa com uma pilha de dois kilobytes, valor definido pela constante `stackMin = 2048` em `runtime/stack.go`, e essa pilha cresce e encolhe conforme a necessidade, com o runtime realocando e ajustando os ponteiros.
+Uma goroutine é a unidade de execução concorrente de Go, criada com a palavra-chave `go`, como em `go produtor(canal)`. Ela não é uma thread do sistema operacional, mas uma unidade gerenciada pelo *runtime* da linguagem no espaço de usuário. Na implementação atual, a pilha de uma goroutine tem no mínimo dois kilobytes, valor definido pela constante `stackMin = 2048` em `runtime/stack.go`; desde o Go 1.19, pode começar maior, segundo a média de uso das goroutines anteriores, e cresce e encolhe conforme a necessidade, com o runtime realocando e ajustando os ponteiros.
 
 Uma thread do sistema operacional, usada por C através de Pthreads e pelas threads de plataforma de Java, reserva uma pilha consideravelmente maior, cujo tamanho é definido pelo sistema e pode ser configurado. Além do consumo de memória, a troca de contexto entre threads do sistema passa pelo núcleo, ao passo que a comutação entre goroutines ocorre no espaço de usuário e envolve salvar poucos registradores. O material de pesquisa inicial afirmava que uma thread do sistema ocupa de um a dois megabytes; como esse valor depende do sistema operacional e da configuração, e nenhuma das fontes consultadas o confirma, ele foi retirado, mantendo-se apenas o valor da goroutine, verificável no código-fonte do runtime.
 
@@ -181,7 +180,7 @@ A formulação precisa, portanto, é a seguinte: o canal resolve o caso do produ
 
 ### 4.1 Arquitetura da solução
 
-O grupo implementou o produtor-consumidor em Go e, para efeito de comparação, o mesmo programa em C e em Java, com comportamento e saída idênticos. Os parâmetros são comuns às três versões: buffer de capacidade três, dez itens, dois consumidores e tempo de processamento de 300 milissegundos por item.
+O grupo implementou o produtor-consumidor em Go e, para efeito de comparação, o mesmo programa em C e em Java, com o mesmo comportamento e saídas equivalentes. Os parâmetros são comuns às três versões: buffer de capacidade três, dez itens, dois consumidores e tempo de processamento de 300 milissegundos por item.
 
 A função produtora gera os itens, simula o tempo de produção com `time.Sleep` e envia cada item ao canal, fechando-o ao terminar.
 
@@ -275,7 +274,7 @@ Por se tratar de programa concorrente, a ordem exata das linhas e a identidade d
 
 Contando apenas linhas de código, sem linhas em branco e sem comentários, os três programas, que fazem exatamente a mesma coisa, apresentam a seguinte extensão.
 
-| Linguagem | Linhas de código | O que o programador manipula |
+| Linguagem | Linhas de código | O que o programador manipula |
 |:-------------------|:------------------------|:-----------------------------------------------------|
 | Go | 67 | `chan`, `go`, `close`, `range`, `sync.WaitGroup` |
 | Java | 134 | vetor circular, índices, `synchronized`, `wait()`, `notifyAll()`, flag de término |
@@ -328,7 +327,7 @@ A tabela a seguir resume as três abordagens.
 
 ### 4.7 Trade-offs
 
-A favor do modelo de Go, para este problema específico, pesa o fato de a exclusão mútua deixar de ser disciplina do programador e passar a ser propriedade da estrutura, pois não existe sequência de envios e recebimentos capaz de deixar o buffer inconsistente. Soma-se a isso a redução de código e de pontos de falha, visto que não há como esquecer um `unlock`, trocar `while` por `if` ou inverter a ordem de duas travas. O término também é mais limpo, apoiado em `close` e `range`, com a direção do canal verificada em tempo de compilação, e o número de consumidores reduz-se a uma constante no código.
+A favor do modelo de Go, para este problema específico, pesa o fato de a exclusão mútua deixar de ser disciplina do programador e passar a ser propriedade da estrutura, pois não existe sequência de envios e recebimentos capaz de deixar o buffer inconsistente. Soma-se a isso a redução de código e de pontos de falha, visto que não há como esquecer um `unlock`, trocar `while` por `if` ou inverter a ordem de duas travas. O término também é mais limpo, apoiado em `close` e `range`, com a direção do canal verificada em tempo de compilação.
 
 Entre as limitações, estão aquelas já discutidas na seção 3.7, às quais se acrescenta o fato de o canal esconder uma trava interna, o que o torna menos indicado para estado compartilhado simples, onde `sync.Mutex` pode ser mais claro e mais rápido. Há igualmente menos controle de baixo nível do que em C, uma vez que escalonamento e coleta de lixo ficam a cargo do runtime, o que pode pesar em sistemas de tempo real ou com memória restrita.
 
@@ -336,7 +335,7 @@ O paradigma imperativo com threads, representado por C, oferece controle total s
 
 ### 4.8 Roteiro da demonstração
 
-A demonstração ocorre no Go Playground, ambiente homologado para o tema, por meio de permalink. O roteiro prevê uma execução inicial sem alterações, na qual a fase 1 mostra os consumidores esperando e a fase 2 mostra o canal enchendo e o produtor esperando. Seguem-se três variações, com previsão solicitada ao público antes de cada uma. Reduzindo a capacidade para um, o produtor passa a esperar a cada item da rajada. Deixando um único consumidor, o consumo fica mais lento que a produção e a fila cresce. Comentando a linha `close(canal)`, o laço `range` nunca termina e o runtime aborta com o erro de impasse.
+A demonstração ocorre no Go Playground, ambiente homologado para o tema, por meio de permalink. O roteiro prevê uma execução inicial sem alterações, na qual a fase 1 mostra os consumidores esperando e a fase 2 mostra o canal enchendo e o produtor esperando. Seguem-se três variações, com previsão solicitada ao público antes de cada uma. Reduzindo a capacidade para um, o produtor passa a esperar a cada item da rajada. Com um único consumidor, o produtor espera várias vezes na rajada. Comentando a linha `close(canal)` e o log abaixo dela, que sozinho anunciaria um falso fechamento, o laço `range` nunca termina e o runtime aborta com o erro de impasse.
 
 Cabe uma observação metodológica. O Go Playground utiliza relógio simulado e determinístico, de modo que os tempos exibidos indicam ordem e bloqueio, e não desempenho real. Nenhuma medição de velocidade deve ser inferida da saída do programa.
 
@@ -347,19 +346,11 @@ O problema do produtor-consumidor é, antes de tudo, um problema de coordenaçã
 
 No modelo imperativo clássico, essa responsabilidade cabe ao programador a cada linha escrita: declarar os semáforos corretos, adquiri-los na ordem certa, testar a condição em laço, escolher entre sinalizar um ou todos. O modelo funciona e oferece controle fino, mas é frágil, e sua fragilidade não está em erros grosseiros, e sim em duas linhas trocadas de lugar.
 
-Em Go, a mesma coordenação é propriedade do canal. O buffer limitado é a capacidade do canal, a espera por espaço e por item é a semântica do envio e do recebimento, o término se dá por `close` com `range`, e os papéis de produtor e consumidor são verificados pelo compilador. O programa resultante é cerca de três vezes menor que o equivalente em C, e os erros clássicos do modelo tradicional não encontram onde ocorrer.
+Em Go, a mesma coordenação é propriedade do canal. O buffer limitado é a capacidade do canal, a espera por espaço e por item é a semântica do envio e do recebimento, o término se dá por `close` com `range`, e os papéis de produtor e consumidor são verificados pelo compilador. O programa resultante tem 67 linhas, contra 173 da versão em C, e os erros clássicos do modelo tradicional não encontram onde ocorrer.
 
 Essa conclusão, contudo, precisa ser enunciada com precisão. Canais não tornam a concorrência segura por si sós, pois impasses continuam possíveis, corridas continuam possíveis quando se compartilha memória por outras vias, e o canal possui internamente a mesma trava que o modelo tradicional expõe. O ganho real é mais modesto, e mais útil, do que a versão publicitária costuma sugerir: para a classe de problemas que o canal foi concebido para resolver, o caminho correto é também o caminho mais curto, e é isso, na prática, o que mais reduz a incidência de erros.
 
-\newpage
-
-\setlength{\parindent}{0pt}
-\setstretch{1.0}
-\setlength{\parskip}{12pt}
-
 ## REFERÊNCIAS
-
-\vspace{6pt}
 
 COX, Russ. **Bell Labs and CSP threads**. Disponível em: https://swtch.com/~rsc/thread/. Acesso em: 12 out. 2026.
 
@@ -367,9 +358,13 @@ GERRAND, Andrew. **Share memory by communicating**. The Go Blog, 13 jul. 2010. D
 
 HOARE, Charles Antony Richard. Communicating sequential processes. **Communications of the ACM**, New York, v. 21, n. 8, p. 666-677, ago. 1978.
 
+PIKE, Rob. **Go Proverbs**. Gopherfest SV, 2015. Disponível em: https://go-proverbs.github.io/. Acesso em: 13 out. 2026.
+
 TANENBAUM, Andrew S.; BOS, Herbert. **Sistemas operacionais modernos**. 4. ed. São Paulo: Pearson, 2016.
 
 THE GO AUTHORS. **Effective Go**. Disponível em: https://go.dev/doc/effective_go. Acesso em: 12 out. 2026.
+
+THE GO AUTHORS. **Go 1.19 release notes**. Disponível em: https://go.dev/doc/go1.19. Acesso em: 13 out. 2026.
 
 THE GO AUTHORS. **The Go memory model**. Disponível em: https://go.dev/ref/mem. Acesso em: 12 out. 2026.
 
