@@ -1,0 +1,162 @@
+/* ============================================================
+   CANAL — Reset e base
+   Depende de tokens.css (que declara a ordem das camadas).
+   ============================================================ */
+
+/* Decisão de produto: a animação é parte obrigatória da experiência em
+   todas as cenas, independente de prefers-reduced-motion do visitante.
+   Nenhuma regra deste arquivo desliga motion sob essa preferência —
+   ver scripts/lib/prefers-motion.js, que também não reage a ela. */
+
+@layer reset {
+  /* Único seletor universal do projeto: fica na camada mais baixa,
+     portanto qualquer camada posterior o sobrescreve sem !important. */
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
+
+  :where(body, h1, h2, h3, h4, p, figure, blockquote, dl, dd, ol, ul) {
+    margin: 0;
+  }
+
+  :where(ol, ul):where([role="list"]) {
+    padding-inline-start: 0;
+    list-style: none;
+  }
+
+  :where(img, picture, video, canvas, svg) {
+    display: block;
+    max-inline-size: 100%;
+  }
+
+  :where(input, button, textarea, select) {
+    font: inherit;
+    color: inherit;
+  }
+
+  :where(button) {
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  :where(a) {
+    color: inherit;
+    text-decoration-thickness: 0.06em;
+    text-underline-offset: 0.22em;
+  }
+
+  :where(h1, h2, h3, h4) {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+    scrollbar-color: var(--ink-600) var(--bg);
+    accent-color: var(--accent);
+    /* Sem guarda de prefers-reduced-motion: rolagem suave é obrigatória
+       em toda a experiência, por decisão de produto. */
+    scroll-behavior: smooth;
+    /* A barra superior é fixed — sem isto, todo salto de âncora (o link
+       "pular para o conteúdo" incluso) para com o alvo escondido atrás
+       dela. Cobre também o foco por teclado chegando perto do topo. */
+    scroll-padding-top: var(--altura-barra);
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    font-optical-sizing: auto;
+    line-height: var(--leading-normal);
+    /* Mantém o corpo estável caso a webfont troque pela fallback. */
+    font-size-adjust: from-font;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Grão de filme: a diferença entre "fundo escuro" e "imagem escura".
+     Camada única, estática e fora do fluxo de eventos. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  @media (forced-colors: active) {
+    body::after {
+      display: none;
+    }
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-display);
+    color: var(--fg-strong);
+    text-wrap: balance;
+  }
+
+  h1 {
+    font-size: var(--fs-h1);
+  }
+
+  h2 {
+    font-size: var(--fs-h2);
+  }
+
+  h3 {
+    font-family: var(--font-body);
+    font-size: var(--fs-h3);
+    font-weight: 500;
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  p {
+    text-wrap: pretty;
+    overflow-wrap: break-word;
+  }
+
+  code,
+  pre,
+  kbd,
+  samp {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--ink-1000);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* Alvos de toque confortáveis sem travar o crescimento por conteúdo. */
+  @media (pointer: coarse) {
+    :where(a, button, [role="button"]) {
+      min-block-size: 44px;
+    }
+  }
+}

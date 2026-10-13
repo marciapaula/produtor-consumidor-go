@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CANAL — O problema produtor–consumidor e a concorrência em Go</title>
+<meta name="description" content="Experiência interativa sobre o problema clássico do produtor–consumidor: do buffer limitado e das travas manuais em C e Java até goroutines e canais no modelo CSP de Go.">
+
+<link rel="icon" href="./assets/img/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="./assets/img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="./assets/img/apple-touch-icon.png">
+<meta name="theme-color" content="#070b0d">
+<link rel="canonical" href="https://prodconsumer.web.app/">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://prodconsumer.web.app/">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="CANAL — O problema produtor–consumidor e a concorrência em Go">
+<meta property="og:description" content="Experiência interativa sobre o problema clássico do produtor–consumidor: do buffer limitado e das travas manuais em C e Java até goroutines e canais no modelo CSP de Go.">
+<meta property="og:image" content="https://prodconsumer.web.app/assets/img/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Um conduto de vidro com esferas cianas em suspensão — o dado em trânsito dentro de um canal.">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CANAL — O problema produtor–consumidor e a concorrência em Go">
+<meta name="twitter:description" content="Experiência interativa sobre o problema clássico do produtor–consumidor: do buffer limitado e das travas manuais em C e Java até goroutines e canais no modelo CSP de Go.">
+<meta name="twitter:image" content="https://prodconsumer.web.app/assets/img/og-image.jpg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Inter:opsz,wght@14..32,400..600&amp;display=swap">
+
+<link rel="stylesheet" href="./styles/tokens.css">
+<link rel="stylesheet" href="./styles/base.css">
+<link rel="stylesheet" href="./styles/layout.css">
+<link rel="stylesheet" href="./styles/components.css">
+<link rel="stylesheet" href="./styles/viz.css">
+<link rel="stylesheet" href="./styles/motion.css">
+</head>
+
+<body>
+
+<a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+<header class="barra">
+  <a class="barra-marca" href="#cena-00">CANAL<span>.</span></a>
+  <p class="barra-ato" id="barra-ato" aria-live="polite">Ato 0 — Abertura</p>
+  <div class="barra-progresso" role="progressbar" aria-label="Progresso da leitura"
+       aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="barra-progresso">
+    <span class="barra-preenchimento"></span>
+  </div>
+</header>
+
+<main id="conteudo">
+
+  <!-- ================= ATO 0 — ABERTURA ================= -->
+  <div class="ato" id="ato-0" data-ato="0" data-ato-nome="Abertura">
+
+    <section class="cena" id="cena-00" data-cena="00" data-tipo="cinematica" aria-labelledby="t-00">
+      <video class="cena-video" src="./assets/video/hero-loop.mp4" poster="./assets/img/hero-poster.jpg"
+             autoplay muted loop playsinline aria-hidden="true"></video>
+      <div class="cena-veu"></div>
+      <div class="cena-abertura">
+        <p class="rotulo">Seminário C1 · Paradigma concorrente · Go</p>
+        <h1 class="titulo-abertura" id="t-00">Entre o produtor e o consumidor, um espaço finito.</h1>
+        <p class="prosa-abertura">
+          O problema clássico de sincronização — e como Go o reescreve
+          com goroutines e canais.
+        </p>
+      </div>
+      <p class="indicio" aria-hidden="true">Role para começar</p>
+    </section>
+
+    <section class="cena" data-cena="01" data-tipo="livre" id="cena-01" aria-labelledby="t-01">
+      <div class="cena-texto cena-texto--centro">
+        <p class="rotulo">01 — A pergunta</p>
+        <h2 class="titulo-grande" id="t-01">Um produz. O outro consome. Nunca no mesmo ritmo.</h2>
+        <p class="prosa">
+          Entre os dois existe um espaço de capacidade finita. Toda a dificuldade da
+          programação concorrente cabe nessa frase — e quase todo erro de concorrência
+          nasce de ignorá-la.
+        </p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ================= ATO I — O PROBLEMA ================= -->
+  <div class="ato" id="ato-I" data-ato="I" data-ato-nome="O problema">
+
+    <header class="ato-abertura">
+      <p class="ato-num">Ato I</p>
+      <h2 class="ato-nome">O problema</h2>
+    </header>
+
+    <section class="cena" id="cena-02" data-cena="02" data-tipo="fixada" aria-labelledby="t-02">
+      <div class="cena-texto">
+        <p class="rotulo">02 — Os três papéis</p>
+        <h3 class="titulo" id="t-02">Três papéis, um contrato</h3>
+        <p class="prosa">
+          O produtor gera itens e os deposita. O consumidor os retira e processa. Entre
+          eles, um buffer de capacidade <b>N</b> absorve a diferença de ritmo.
+        </p>
+        <p class="prosa">
+          Sem esse intermediário, o mais rápido dos dois precisaria esperar pelo outro
+          a cada item trocado.
+        </p>
+      </div>
+      <figure class="palco" data-viz="buffer" data-modo="apresentacao">
+        <div class="palco-vazio">V1 · Produtor → buffer → consumidor</div>
+        <figcaption class="sr-only">
+          Diagrama animado: um produtor deposita itens em um buffer de capacidade finita,
+          de onde um consumidor os retira.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="cena" id="cena-03" data-cena="03" data-tipo="fixada" aria-labelledby="t-03">
+      <div class="cena-texto">
+        <p class="rotulo">03 — O descompasso</p>
+        <h3 class="titulo" id="t-03">Ritmos que não coincidem</h3>
+        <p class="prosa">
+          Se o produtor é mais rápido, o buffer enche. Se o consumidor é mais rápido, o
+          buffer esvazia. Nenhum dos dois casos é um defeito: é o comportamento normal
+          de um sistema cujas partes são independentes.
+        </p>
+      </div>
+      <figure class="palco" data-viz="buffer" data-modo="descompasso">
+        <div class="palco-vazio">V1 · Produtor rápido, consumidor lento</div>
+        <figcaption class="sr-only">
+          O buffer enche progressivamente quando a produção supera o consumo.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="cena cena--eixo" id="cena-04" data-cena="04" data-tipo="interativa" aria-labelledby="t-04">
+      <div class="cena-texto">
+        <p class="rotulo">04 — Cheio e vazio</p>
+        <h3 class="titulo" id="t-04">As duas condições críticas</h3>
+        <p class="prosa">
+          <b>Buffer cheio:</b> o produtor precisa esperar até existir espaço.
+          <b>Buffer vazio:</b> o consumidor precisa esperar até existir item.
+        </p>
+        <p class="prosa">
+          Esperar sem travar o sistema, sem queimar CPU em espera ocupada e sem ler
+          dado inválido — esse é o problema inteiro.
+        </p>
+        <p class="nota">Os controles são seus. Force as duas condições.</p>
+      </div>
+      <figure class="palco palco--alto" data-viz="buffer" data-modo="interativo-travas">
+        <div class="palco-vazio">V1 · Controles: N, ritmo de produção e consumo</div>
+        <figcaption class="sr-only">
+          Simulação interativa do buffer limitado com controles de capacidade e de
+          ritmo de produção e consumo.
+        </figcaption>
+      </figure>
+    </section>
+
+  </div>
+
+  <!-- ================= ATO II — A FRAGILIDADE ================= -->
+  <div class="ato" id="ato-II" data-ato="II" data-ato-nome="A fragilidade">
+
+    <header class="ato-abertura ato-abertura--falha">
+      <p class="ato-num">Ato II</p>
+      <h2 class="ato-nome">A fragilidade</h2>
+    </header>
+
+    <section class="cena" id="cena-05" data-cena="05" data-tipo="fixada" aria-labelledby="t-05">
+      <div class="cena-texto">
+        <p class="rotulo">05 — Memória compartilhada</p>
+        <h3 class="titulo" id="t-05">O modelo tradicional</h3>
+        <p class="prosa">
+          Em C e Java, o buffer é uma estrutura na memória compartilhada. Várias threads
+          a acessam ao mesmo tempo, e cabe ao programador arbitrar cada acesso com
+          primitivas manuais de sincronização.
+        </p>
+      </div>
+      <figure class="palco" data-viz="compartilhada">
+        <div class="palco-vazio">V4 · Área compartilhada e dois ponteiros</div>
+        <figcaption class="sr-only">
+          Duas threads acessando simultaneamente a mesma região de memória.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="cena" id="cena-06" data-cena="06" data-tipo="fixada" aria-labelledby="t-06">
+      <div class="cena-texto">
+        <p class="rotulo">06 — Condição de corrida</p>
+        <h3 class="titulo" id="t-06">Quando duas escritas se cruzam</h3>
+        <p class="prosa">
+          Incrementar um contador não é uma operação única: é <b>ler</b>, <b>somar</b> e
+          <b>escrever</b>. Se duas threads intercalam esses passos sem proteção, uma
+          sobrescreve o resultado da outra.
+        </p>
+        <p class="prosa">
+          O contador passa a mentir sobre o conteúdo real do buffer — e o programa
+          continua rodando como se nada tivesse acontecido.
+        </p>
+      </div>
+      <figure class="palco palco--alto" data-viz="corrida">
+        <div class="palco-vazio">V2 · Intercalação de instruções, passo a passo</div>
+        <figcaption class="sr-only">
+          Linha do tempo mostrando duas threads intercalando leitura e escrita do mesmo
+          contador, resultando em um valor inconsistente.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="cena" id="cena-07" data-cena="07" data-tipo="fixada" aria-labelledby="t-07">
+      <div class="cena-texto">
+        <p class="rotulo">07 — As travas</p>
+        <h3 class="titulo" id="t-07">Semáforos, mutex, variáveis de condição</h3>
+        <p class="prosa">
+          A solução clássica usa um semáforo para contar espaços livres, outro para
+          contar itens disponíveis e um mutex para proteger o buffer.
+        </p>
+        <p class="prosa">
+          Três mecanismos distintos, coordenados à mão, em uma ordem que precisa estar
+          exatamente certa.
+        </p>
+      </div>
+      <figure class="palco" data-viz="primitivas">
+        <div class="palco-vazio">V4 · As primitivas como portões sequenciais</div>
+        <figcaption class="sr-only">
+          Representação das primitivas de sincronização como portões que cada thread
+          precisa atravessar em ordem.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="cena" id="cena-08" data-cena="08" data-tipo="interativa" aria-labelledby="t-08">
+      <div class="cena-texto">
+        <p class="rotulo">08 — A ordem importa</p>
+        <h3 class="titulo" id="t-08">Duas linhas trocadas</h3>
+        <p class="prosa">
+          Se o mutex for adquirido <b>antes</b> do semáforo, o produtor pode adormecer
+          segurando exatamente a trava que o consumidor precisa para liberar espaço.
+        </p>
+        <p class="prosa">
+          Nenhum dos dois acorda. O programa não falha com erro nem trava a máquina:
+          ele simplesmente para, em silêncio.
+        </p>
+        <p class="nota">Reordene as linhas e provoque o impasse.</p>
+      </div>
+      <figure class="palco palco--alto" data-viz="impasse">
+        <div class="palco-vazio">V3 · Reordenação e impasse</div>
+        <figcaption class="sr-only">
+          Simulação em que trocar a ordem de aquisição do mutex e do semáforo leva
+          produtor e consumidor a um bloqueio mútuo permanente.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="cena" id="cena-09" data-cena="09" data-tipo="livre" aria-labelledby="t-09">
+      <div class="cena-texto cena-texto--largo">
+        <p class="rotulo">09 — C e Java</p>
+        <h3 class="titulo" id="t-09">O mesmo problema, escrito à mão</h3>
+        <p class="prosa">
+          Em pthreads, a sincronização é explícita a cada passo. Em Java, o monitor
+          embute a trava no próprio objeto — mas ainda exige <code>wait</code> e
+          <code>notifyAll</code> nos lugares certos.
+        </p>
+        <div class="palco" data-viz="codigo-tradicional">
+          <div class="palco-vazio">Blocos de código C e Java com o custo de sincronização destacado</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ================= ATO III — A RUPTURA ================= -->
+  <div class="ato" id="ato-III" data-ato="III" data-ato-nome="A ruptura">
+
+    <header class="ato-abertura">
+      <p class="ato-num">Ato III</p>
+      <h2 class="ato-nome">A ruptura</h2>
+    </header>
+
+    <section class="cena" id="cena-10" data-cena="10" data-tipo="cinematica" aria-labelledby="t-10">
+      <div class="cena-texto">
+        <p class="rotulo">10 — Hoare, 1978</p>
+        <h3 class="titulo" id="t-10">Uma álgebra sem memória compartilhada</h3>
+        <p class="prosa">
+          C. A. R. Hoare propôs descrever sistemas concorrentes como processos
+          sequenciais isolados, que não compartilham estado e se coordenam apenas
+          trocando mensagens por canais.
+        </p>
+        <p class="prosa">
+          A partilha de memória não é protegida com mais cuidado. Ela é
+          <b>banida</b> do modelo.
+        </p>
+      </div>
+      <figure class="palco" data-viz="canal" data-modo="csp">
+        <div class="palco-vazio">V5 · A memória compartilhada se dissolve em canais</div>
+        <figcaption class="sr-only">
+          Transição visual entre o modelo de memória compartilhada e o modelo de
+          processos isolados comunicando-se por canais.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="cena" id="cena-11" data-cena="11" data-tipo="lema" aria-labelledby="t-11">
+      <blockquote class="lema">
+        <p class="lema-texto" id="t-11">
+          <span>Não comunique compartilhando memória; em vez disso,</span>
+          <em>compartilhe memória comunicando.</em>
+        </p>
+        <footer class="lema-fonte">Rob Pike · <cite>Share Memory By Communicating</cite></footer>
+      </blockquote>
+    </section>
+
+    <section class="cena" id="cena-12" data-cena="12" data-tipo="fixada" aria-labelledby="t-12">
+      <div class="cena-texto">
+        <p class="rotulo">12 — Goroutines</p>
+        <h3 class="titulo" id="t-12">Unidades de execução leves</h3>
+        <p class="prosa">
+          Uma goroutine não é uma thread do sistema operacional. É gerida pelo runtime
+          do Go no espaço de usuário e começa com uma pilha mínima de <b>2 KB</b>, que
+          cresce e encolhe conforme a necessidade.
+        </p>
+        <p class="nota">
+          Verificado no código-fonte oficial: <code>stackMin = 2048</code>,
+          em <code>runtime/stack.go</code>.
+        </p>
+      </div>
+      <figure class="palco" data-viz="escalonador">
+        <div class="palco-vazio">V7 escala · V8 escalonador GMP</div>
+        <figcaption class="sr-only">
+          Comparação de custo de pilha entre goroutine e thread do sistema, e
+          distribuição de goroutines entre processadores lógicos e threads.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="cena cena--eixo" id="cena-13" data-cena="13" data-tipo="interativa" aria-labelledby="t-13">
+      <div class="cena-texto">
+        <p class="rotulo">13 — O canal</p>
+        <h3 class="titulo" id="t-13"><code class="titulo-codigo">make(chan T, N)</code></h3>
+        <p class="prosa">
+          A mesma simulação do Ato I, com os mesmos controles — agora sobre um canal
+          com buffer.
+        </p>
+        <p class="prosa">
+          A diferença é que não existe sequência de operações capaz de produzir estado
+          inconsistente. A exclusão mútua deixou de ser uma disciplina do programador e
+          passou a ser uma propriedade da estrutura.
+        </p>
+        <p class="nota">Tente quebrar. Os mesmos controles, o mesmo limite.</p>
+      </div>
+      <figure class="palco palco--alto" data-viz="buffer" data-modo="interativo-canal">
+        <div class="palco-vazio">V1 · A mesma interface, agora sobre canais</div>
+        <figcaption class="sr-only">
+          Simulação interativa equivalente à do Ato I, agora implementada com um canal
+          com buffer, sem possibilidade de estado inconsistente.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="cena" id="cena-14" data-cena="14" data-tipo="fixada" aria-labelledby="t-14">
+      <div class="cena-texto">
+        <p class="rotulo">14 — Bloqueio automático</p>
+        <h3 class="titulo" id="t-14">A espera que você não escreve</h3>
+        <p class="prosa">
+          Enviar para um canal cheio suspende a goroutine. Receber de um canal vazio faz
+          o mesmo. O runtime a retira do processador e a devolve quando a condição muda.
+        </p>
+        <p class="prosa">
+          Sem flag, sem espera ocupada, sem sinal perdido.
+        </p>
+      </div>
+      <figure class="palco" data-viz="canal" data-modo="rendezvous">
+        <div class="palco-vazio">V5 · Envio, recebimento, bloqueio e liberação</div>
+        <figcaption class="sr-only">
+          Comparação entre canal sem buffer, que exige encontro síncrono, e canal com
+          buffer, que funciona como fila.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="cena" id="cena-15" data-cena="15" data-tipo="fixada" aria-labelledby="t-15">
+      <div class="cena-texto">
+        <p class="rotulo">15 — Ciclo de vida</p>
+        <h3 class="titulo" id="t-15">Fechar, percorrer, restringir</h3>
+        <p class="prosa">
+          <code>close</code> sinaliza o fim da transmissão. <code>for range</code> consome
+          até o canal fechar e esvaziar, encerrando sozinho.
+        </p>
+        <p class="prosa">
+          E tipar o parâmetro como <code>chan&lt;-</code> ou <code>&lt;-chan</code>
+          transforma a direção do fluxo em erro de compilação, não em bug de execução.
+        </p>
+      </div>
+      <figure class="palco" data-viz="ciclo-vida">
+        <div class="palco-vazio">V9 · close, range e a direção como contrato</div>
+        <figcaption class="sr-only">
+          Ciclo de vida do canal, incluindo o erro de compilação gerado ao violar a
+          direção declarada.
+        </figcaption>
+      </figure>
+    </section>
+
+  </div>
+
+  <!-- ================= ATO IV — A MÁQUINA ================= -->
+  <div class="ato" id="ato-IV" data-ato="IV" data-ato-nome="A máquina">
+
+    <header class="ato-abertura ato-abertura--maquina">
+      <p class="ato-num">Ato IV</p>
+      <h2 class="ato-nome">A máquina</h2>
+    </header>
+
+    <section class="cena" id="cena-16" data-cena="16" data-tipo="fixada" aria-labelledby="t-16">
+      <div class="cena-texto">
+        <p class="rotulo">16 — Dentro do hchan</p>
+        <h3 class="titulo" id="t-16">O que o runtime faz por você</h3>
+        <p class="prosa">
+          Um canal com buffer é uma estrutura alocada no heap: um array circular, dois
+          cursores de posição e duas filas de espera.
+        </p>
+        <p class="prosa">
+          Quando uma goroutine bloqueia, ela vira um registro nessa fila — até que outra
+          goroutine satisfaça a condição e o escalonador a acorde.
+        </p>
+        <p class="aviso">
+          Camada interna do runtime, não comportamento garantido pela linguagem.
+          Detalhes de implementação podem mudar entre versões.
+        </p>
+      </div>
+      <figure class="palco palco--alto" data-viz="hchan">
+        <div class="palco-vazio">V6 · Buffer circular, cursores e filas de espera</div>
+        <figcaption class="sr-only">
+          Anatomia interna de um canal com buffer: array circular, cursores de envio e
+          recebimento, contadores de ocupação e filas de goroutines bloqueadas.
+        </figcaption>
+      </figure>
+    </section>
+
+  </div>
+
+  <!-- ================= ATO V — A PROVA ================= -->
+  <div class="ato" id="ato-V" data-ato="V" data-ato-nome="A prova">
+
+    <header class="ato-abertura ato-abertura--prova">
+      <p class="ato-num">Ato V</p>
+      <h2 class="ato-nome">A prova</h2>
+    </header>
+
+    <section class="cena" id="cena-17" data-cena="17" data-tipo="livre" aria-labelledby="t-17">
+      <div class="cena-texto cena-texto--largo">
+        <p class="rotulo">17 — Demonstração</p>
+        <h3 class="titulo" id="t-17">Execute e mude os parâmetros</h3>
+        <p class="prosa">
+          O mesmo programa, rodando de verdade. Altere o tamanho do buffer, o número de
+          consumidores e os tempos de produção para ver o comportamento mudar.
+        </p>
+        <div class="palco" data-viz="demonstracao">
+          <div class="palco-vazio">Código com botão de copiar, execução externa e embed opcional</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cena" id="cena-18" data-cena="18" data-tipo="livre" aria-labelledby="t-18">
+      <div class="cena-texto cena-texto--largo">
+        <p class="rotulo">18 — Comparação</p>
+        <h3 class="titulo" id="t-18">Três formas de dizer a mesma coisa</h3>
+        <p class="prosa">
+          A comparação não é sobre velocidade, e não há vencedor a declarar. É sobre
+          <b>onde mora a responsabilidade pela sincronização</b> — e quanto código é
+          preciso escrever para expressá-la.
+        </p>
+        <div class="palco" data-viz="comparacao">
+          <div class="palco-vazio">V10 · O mesmo programa em C, Java e Go</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cena" id="cena-19" data-cena="19" data-tipo="livre" aria-labelledby="t-19">
+      <div class="cena-texto cena-texto--centro">
+        <p class="rotulo">19 — Síntese</p>
+        <h2 class="titulo-grande" id="t-19">O que realmente muda</h2>
+        <p class="prosa">
+          A coordenação deixa de ser uma disciplina que o programador sustenta a
+          cada linha e passa a ser uma propriedade do canal.
+        </p>
+        <div class="palco palco--fechamento" data-viz="sintese">
+          <div class="palco-vazio">Chamadas de sincronização manual — C, Java, Go</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cena" id="cena-20" data-cena="20" data-tipo="livre" aria-labelledby="t-20">
+      <div class="cena-texto cena-texto--largo">
+        <p class="rotulo">20 — Referências</p>
+        <h3 class="titulo" id="t-20">Fontes</h3>
+        <ol class="referencias">
+          <li>
+            HOARE, C. A. R. <cite>Communicating Sequential Processes</cite>.
+            Communications of the ACM, v. 21, n. 8, p. 666–677, 1978.
+          </li>
+          <li>
+            PIKE, Rob. <cite>Share Memory By Communicating</cite>. The Go Blog.
+            <a href="https://go.dev/blog/codelab-share" target="_blank" rel="noopener noreferrer">go.dev/blog/codelab-share</a>
+          </li>
+          <li>
+            THE GO AUTHORS. <cite>runtime/chan.go</cite> — implementação de canais.
+            <a href="https://github.com/golang/go/blob/master/src/runtime/chan.go" target="_blank" rel="noopener noreferrer">github.com/golang/go</a>
+          </li>
+          <li>
+            THE GO AUTHORS. <cite>runtime/stack.go</cite> — constante <code>stackMin</code>.
+            <a href="https://go.googlesource.com/go/+/refs/heads/master/src/runtime/stack.go" target="_blank" rel="noopener noreferrer">go.googlesource.com</a>
+          </li>
+          <li>
+            THE GO AUTHORS. <cite>The Go Memory Model</cite>.
+            <a href="https://go.dev/ref/mem" target="_blank" rel="noopener noreferrer">go.dev/ref/mem</a>
+          </li>
+          <li>
+            TANENBAUM, A. S.; BOS, H. <cite>Sistemas Operacionais Modernos</cite>.
+            Produtor–consumidor, semáforos, mutexes e monitores.
+          </li>
+        </ol>
+      </div>
+    </section>
+
+  </div>
+
+</main>
+
+<footer class="rodape">
+  <p>CANAL · Seminário C1 — Produtor–consumidor · Paradigma concorrente · Go · 14.10.2026</p>
+</footer>
+
+<script src="./vendor/gsap/gsap.min.js"></script>
+<script src="./vendor/gsap/ScrollTrigger.min.js"></script>
+<script type="module" src="./scripts/main.js"></script>
+
+</body>
+</html>

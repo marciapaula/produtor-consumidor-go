@@ -1,0 +1,176 @@
+/* ============================================================
+   CANAL — Camada de movimento
+   Os estados iniciais das animações são aplicados por JavaScript
+   (gsap.set), nunca aqui: se o script falhar, o conteúdo precisa
+   aparecer visível em vez de ficar preso em opacity 0.
+   ============================================================ */
+
+@property --regua {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+@property --eixo {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+@layer components {
+
+  /* Régua do ato: desenhada da esquerda para a direita na entrada */
+  .ato-abertura {
+    position: relative;
+    border-block-end: none;
+  }
+
+  .ato-abertura::after {
+    content: "";
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline: 0;
+    block-size: 2px;
+    background-color: var(--accent);
+    scale: var(--regua) 1;
+    transform-origin: left center;
+  }
+
+  .ato-abertura--falha::after { background-color: var(--state-fault); }
+  .ato-abertura--maquina::after { background-color: var(--state-blocked); }
+  .ato-abertura--prova::after { background-color: var(--bone-500); }
+
+  /* Trilho do eixo do argumento: cresce de cima para baixo */
+  .cena--eixo::before {
+    scale: 1 var(--eixo);
+    transform-origin: top center;
+  }
+
+  /* Palco grudento: a visualização permanece enquanto o texto passa.
+     Só faz sentido onde há duas colunas. */
+  @media (min-width: 64rem) {
+    .cena:where([data-tipo="fixada"], [data-tipo="interativa"]) .palco {
+      position: sticky;
+      inset-block-start: calc(3.5rem + var(--space-lg));
+    }
+  }
+
+  /* O vídeo de abertura é percorrido pela rolagem: avisa o compositor
+     para promovê-lo a uma camada própria e evitar repintura da cena. */
+  .cena-video {
+    will-change: transform;
+  }
+
+  /* ---------- Cortina de abertura ---------- */
+
+  .cortina {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    display: grid;
+    place-items: center;
+    background-color: var(--ink-1000);
+    pointer-events: none;
+  }
+
+  .cortina-marca {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-h1);
+    font-weight: 300;
+    letter-spacing: var(--tracking-display);
+    color: var(--fg-strong);
+  }
+
+  .cortina-marca span {
+    display: inline-block;
+  }
+
+  .cortina-ponto {
+    color: var(--accent);
+  }
+
+  /* ---------- Cursor customizado ----------
+     Só existe em dispositivo com mouse de verdade: scripts/motion/cursor.js
+     nem cria os elementos se (hover: hover) and (pointer: fine) falhar, e
+     a regra de esconder o cursor nativo fica presa à classe que só esse
+     script adiciona — se o JS falhar, o cursor do sistema continua ali. */
+  @media (hover: hover) and (pointer: fine) {
+    .tem-cursor-custom,
+    .tem-cursor-custom * {
+      cursor: none;
+    }
+
+    .cursor-ponto,
+    .cursor-anel {
+      position: fixed;
+      inset-block-start: 0;
+      inset-inline-start: 0;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 10000;
+      will-change: transform;
+    }
+
+    .cursor-ponto {
+      inline-size: 6px;
+      block-size: 6px;
+      border-radius: 50%;
+      background-color: var(--accent);
+    }
+
+    .cursor-anel {
+      inline-size: 32px;
+      block-size: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1px solid var(--accent);
+      transition:
+        inline-size var(--dur-ui) var(--ease-out-quart),
+        block-size var(--dur-ui) var(--ease-out-quart),
+        background-color var(--dur-ui) var(--ease-out-quart);
+    }
+
+    /* Sobre algo clicável: o anel cresce e ganha um miolo suave —
+       o convite pra clicar chega antes do clique. */
+    .cursor-anel[data-estado="ativo"] {
+      inline-size: 52px;
+      block-size: 52px;
+      background-color: oklch(0.687 0.127 221 / 0.14);
+    }
+
+    /* Sobre um slider: o gesto aqui não é "clique", é "arraste" — o
+       anel troca de traço em vez de crescer e ganhar miolo opaco, pra
+       nunca esconder o polegar do slider bem debaixo do cursor. */
+    .cursor-anel[data-estado="arraste"] {
+      inline-size: 40px;
+      block-size: 40px;
+      border-style: dashed;
+      background-color: transparent;
+    }
+
+    /* O rótulo flutua acima do anel, não dentro dele — mesma razão:
+       não tampar o ponto exato que a mão está ajustando. */
+    .cursor-rotulo {
+      position: absolute;
+      inset-block-end: 100%;
+      margin-block-end: var(--space-2xs);
+      padding: var(--space-3xs) var(--space-2xs);
+      background-color: var(--bg-elevated);
+      border-radius: 2px;
+      white-space: nowrap;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: var(--tracking-wide);
+      text-transform: uppercase;
+      color: var(--fg-strong);
+      opacity: 0;
+      transition: opacity var(--dur-ui) var(--ease-out-quart);
+    }
+
+    .cursor-anel[data-estado="arraste"] .cursor-rotulo {
+      opacity: 1;
+    }
+  }
+}

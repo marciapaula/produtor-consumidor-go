@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>CANAL — Arquitetura Narrativa</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Inter:opsz,wght@14..32,400..600&amp;display=swap">
+
+<link rel="stylesheet" href="./styles/tokens.css">
+<link rel="stylesheet" href="./styles/base.css">
+
+<style>
+@layer components {
+
+  .shell {
+    inline-size: min(100% - var(--gutter) * 2, var(--container));
+    margin-inline: auto;
+  }
+
+  .masthead {
+    padding-block: var(--space-3xl) var(--space-2xl);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    font-weight: 500;
+    letter-spacing: var(--tracking-machine);
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+
+  .title {
+    font-family: var(--font-display);
+    font-size: var(--fs-h1);
+    font-weight: 300;
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-display);
+    color: var(--fg-strong);
+    margin-block: var(--space-sm) 0;
+    max-inline-size: 20ch;
+  }
+
+  .lead {
+    max-inline-size: 60ch;
+    margin-block-start: var(--space-md);
+    font-size: var(--fs-lead);
+    color: var(--fg-muted);
+  }
+
+  .band {
+    border-block-start: var(--hairline) solid var(--line);
+    padding-block: var(--space-2xl);
+  }
+
+  .band-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    font-weight: 300;
+    letter-spacing: var(--tracking-display);
+    color: var(--fg-strong);
+    margin-block: var(--space-sm) 0;
+  }
+
+  .band-note {
+    max-inline-size: var(--measure);
+    margin-block-start: var(--space-sm);
+    color: var(--fg-muted);
+  }
+
+  /* ---------- Mapa de ritmo ---------- */
+
+  .rhythm {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    block-size: 11rem;
+    margin-block-start: var(--space-lg);
+    padding-block-end: var(--space-sm);
+    border-block-end: var(--hairline) solid var(--line);
+  }
+
+  .rhythm-bar {
+    flex: 1;
+    min-inline-size: 0;
+    background: linear-gradient(to top in oklab, var(--flow-700), var(--tint));
+    block-size: var(--h);
+    position: relative;
+    transition: opacity var(--dur-ui) var(--ease-out-quart);
+  }
+
+  .rhythm-bar::after {
+    content: attr(data-n);
+    position: absolute;
+    inset-block-start: calc(100% + 0.4rem);
+    inset-inline-start: 0;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--fg-subtle);
+  }
+
+  .rhythm:hover .rhythm-bar { opacity: 0.35; }
+  .rhythm .rhythm-bar:hover { opacity: 1; }
+
+  .acts-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-md);
+    margin-block-start: var(--space-md);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+
+  .acts-legend span::before {
+    content: "";
+    display: inline-block;
+    inline-size: 0.7em;
+    aspect-ratio: 1;
+    margin-inline-end: 0.5em;
+    background-color: var(--tint);
+  }
+
+  /* ---------- Cenas ---------- */
+
+  .act {
+    margin-block-start: var(--space-2xl);
+  }
+
+  .act-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-md);
+    padding-block-end: var(--space-sm);
+    border-block-end: 2px solid var(--tint);
+  }
+
+  .act-num {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-machine);
+    color: var(--tint);
+  }
+
+  .act-name {
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    font-weight: 300;
+    letter-spacing: var(--tracking-tight);
+    color: var(--fg-strong);
+  }
+
+  .scene {
+    display: grid;
+    gap: var(--space-2xs) var(--space-lg);
+    padding-block: var(--space-md);
+    border-block-end: var(--hairline) solid var(--line);
+  }
+
+  @media (min-width: 62rem) {
+    .scene {
+      grid-template-columns: 3rem minmax(0, 15rem) minmax(0, 1fr) 11rem;
+      align-items: start;
+    }
+  }
+
+  .scene-num {
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    color: var(--tint);
+  }
+
+  .scene-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    font-weight: 300;
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-tight);
+    color: var(--fg-strong);
+  }
+
+  .scene-teaches {
+    color: var(--fg-muted);
+    font-size: var(--fs-small);
+  }
+
+  .scene-viz {
+    display: block;
+    margin-block-start: var(--space-2xs);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    color: var(--accent-soft);
+  }
+
+  .scene-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3xs);
+    align-items: start;
+  }
+
+  .chip {
+    padding: 0.2em 0.6em;
+    border: var(--hairline) solid currentColor;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+  }
+
+  .chip[data-kind="cinematica"] { color: var(--flow-300); }
+  .chip[data-kind="fixada"] { color: var(--hold-300); }
+  .chip[data-kind="interativa"] { color: var(--fault-300); }
+  .chip[data-kind="livre"] { color: var(--fg-subtle); }
+
+  .scene[data-axis="true"] {
+    background: linear-gradient(to right in oklab, oklch(0.687 0.127 221 / 0.09), transparent 70%);
+    border-inline-start: 2px solid var(--accent);
+    padding-inline-start: var(--space-sm);
+  }
+
+  .axis-flag {
+    display: inline-block;
+    margin-block-start: var(--space-2xs);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  /* ---------- Inventário ---------- */
+
+  .inventory {
+    display: grid;
+    gap: var(--space-sm);
+    margin-block-start: var(--space-lg);
+  }
+
+  @media (min-width: 48rem) {
+    .inventory { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .viz {
+    display: grid;
+    gap: var(--space-2xs);
+    padding: var(--space-md);
+    background-color: var(--bg-raised);
+    border: var(--hairline) solid var(--line);
+    border-block-start: 2px solid var(--tint);
+  }
+
+  .viz-id {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-machine);
+    color: var(--tint);
+  }
+
+  .viz-name {
+    font-size: var(--fs-h3);
+    font-weight: 500;
+    letter-spacing: var(--tracking-tight);
+    color: var(--fg-strong);
+  }
+
+  .viz-desc {
+    font-size: var(--fs-small);
+    color: var(--fg-muted);
+    margin: 0;
+  }
+
+  .viz-tech {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    color: var(--fg-subtle);
+  }
+
+  /* ---------- Estrutura de arquivos ---------- */
+
+  .tree {
+    margin: var(--space-lg) 0 0;
+    padding: var(--space-md);
+    background-color: var(--bg-sunken);
+    border: var(--hairline) solid var(--line);
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    line-height: 1.7;
+    color: var(--fg-muted);
+  }
+
+  .tree b { color: var(--accent-soft); font-weight: 500; }
+  .tree i { color: var(--fg-subtle); font-style: normal; }
+  .tree u { color: var(--hold-300); text-decoration: none; }
+
+  /* ---------- Decisões ---------- */
+
+  .decisions {
+    display: grid;
+    gap: var(--space-md);
+    margin-block-start: var(--space-lg);
+  }
+
+  .decision {
+    padding: var(--space-md);
+    background-color: var(--bg-raised);
+    border-inline-start: 2px solid var(--state-blocked);
+  }
+
+  .decision h3 {
+    font-family: var(--font-body);
+    font-size: var(--fs-h3);
+    font-weight: 500;
+    letter-spacing: var(--tracking-tight);
+    color: var(--fg-strong);
+    margin-block-end: var(--space-2xs);
+  }
+
+  .decision p {
+    max-inline-size: var(--measure);
+    font-size: var(--fs-small);
+    color: var(--fg-muted);
+    margin: 0;
+  }
+
+  .decision p + p { margin-block-start: var(--space-2xs); }
+
+  .colophon {
+    border-block-start: var(--hairline) solid var(--line);
+    padding-block: var(--space-lg) var(--space-2xl);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header class="shell masthead">
+  <p class="eyebrow">Sprint 02 — Arquitetura narrativa</p>
+  <h1 class="title">Vinte e uma cenas, cinco atos, um argumento.</h1>
+  <p class="lead">
+    As dezesseis batidas previstas no briefing reorganizadas como arco dramático.
+    O visitante não percorre seções independentes: ele atravessa um sistema que
+    primeiro falha na frente dele e depois se recusa a falhar.
+  </p>
+</header>
+
+<main>
+
+  <section class="shell band">
+    <p class="eyebrow">A — Ritmo</p>
+    <h2 class="band-title">A curva de tensão</h2>
+    <p class="band-note">
+      Intensidade de movimento e densidade de informação ao longo da rolagem.
+      Um site que grita o tempo inteiro cansa em noventa segundos: o pico do Ato II
+      (o impasse) só funciona por causa do vale que vem logo depois — o lema do Go,
+      em silêncio tipográfico quase absoluto.
+    </p>
+    <div class="rhythm" id="rhythm"></div>
+    <div class="acts-legend" id="legend"></div>
+  </section>
+
+  <section class="shell band">
+    <p class="eyebrow">B — Cenas</p>
+    <h2 class="band-title">O roteiro</h2>
+    <p class="band-note">
+      Cada cena declara o que ensina, qual visualização carrega e o que a rolagem faz nela.
+      As duas cenas destacadas em ciano são o eixo do argumento.
+    </p>
+    <div id="acts"></div>
+  </section>
+
+  <section class="shell band">
+    <p class="eyebrow">C — Inventário</p>
+    <h2 class="band-title">As peças a construir</h2>
+    <p class="band-note">
+      Dez visualizações, em três níveis de prioridade. P0 são inegociáveis — sem elas
+      o site vira texto ilustrado. P2 entram apenas se o cronograma até 14/10 permitir.
+    </p>
+    <div class="inventory" id="inventory"></div>
+  </section>
+
+  <section class="shell band">
+    <p class="eyebrow">D — Estrutura</p>
+    <h2 class="band-title">Organização dos arquivos</h2>
+    <p class="band-note">
+      Módulos ES nativos, sem bundler nem build step — o deploy no Firebase continua
+      sendo copiar a pasta. Em <u>âmbar</u>, o que será apagado na Sprint 3.
+    </p>
+<pre class="tree">public/
+├── <b>index.html</b>            <i>site real, seções escritas à mão</i>
+├── 404.html
+├── <i>styleguide.html</i>       <i>artefato Sprint 1 — sai antes do deploy</i>
+├── <i>storyboard.html</i>       <i>este arquivo — sai antes do deploy</i>
+├── styles/
+│   ├── <b>tokens.css</b>        <i>✓ Sprint 1</i>
+│   ├── <b>base.css</b>          <i>✓ Sprint 1</i>
+│   ├── <b>layout.css</b>        <i>grid, atos, tipos de cena</i>
+│   ├── <b>components.css</b>    <i>átomos reutilizáveis</i>
+│   ├── <b>scenes.css</b>        <i>estilos específicos por cena</i>
+│   ├── <u>main.css</u>          <u>apagar</u>
+│   ├── <u>typography.css</u>    <u>apagar</u>
+│   └── <u>animations.css</u>    <u>apagar</u>
+├── scripts/
+│   ├── <b>main.js</b>           <i>entrada, registra cenas</i>
+│   ├── motion/
+│   │   ├── <b>scroll.js</b>     <i>ScrollTrigger, pin, scrub</i>
+│   │   └── <b>hero.js</b>       <i>scrub do vídeo all-intra</i>
+│   ├── viz/
+│   │   ├── <b>buffer.js</b>     <i>V1 — os dois motores</i>
+│   │   ├── <b>race.js</b>       <i>V2</i>
+│   │   ├── <b>deadlock.js</b>   <i>V3</i>
+│   │   ├── <b>channel.js</b>    <i>V6 — hchan</i>
+│   │   └── <b>scheduler.js</b>  <i>V8 — GMP</i>
+│   ├── lib/
+│   │   └── <b>clock.js</b>      <i>relógio de simulação compartilhado</i>
+│   ├── <u>app.js</u>            <u>apagar</u>
+│   ├── <u>motion.js</u>         <u>apagar</u>
+│   └── <u>simulations.js</u>    <u>apagar</u>
+├── vendor/
+│   └── <b>gsap/</b>             <i>GSAP + ScrollTrigger auto-hospedados</i>
+└── assets/
+    ├── video/hero-loop.mp4  <i>✓ 7 MB, all-intra</i>
+    └── img/hero-poster.jpg  <i>✓ 96 KB</i></pre>
+  </section>
+
+  <section class="shell band">
+    <p class="eyebrow">E — Decisões</p>
+    <h2 class="band-title">O que precisa do seu aval</h2>
+    <div class="decisions" id="decisions"></div>
+  </section>
+
+</main>
+
+<footer class="shell colophon">
+  CANAL · Sprint 02 · Artefato interno de planejamento — não faz parte do site publicado
+</footer>
+
+<script type="module">
+  const ACTS = [
+    { id: "0", name: "Abertura", tint: "var(--flow-300)" },
+    { id: "I", name: "O problema", tint: "var(--flow-500)" },
+    { id: "II", name: "A fragilidade", tint: "var(--fault-500)" },
+    { id: "III", name: "A ruptura", tint: "var(--flow-400)" },
+    { id: "IV", name: "A máquina", tint: "var(--hold-500)" },
+    { id: "V", name: "A prova", tint: "var(--bone-400)" },
+  ];
+
+  const SCENES = [
+    { act: "0", n: "00", title: "Limiar", kind: "cinematica", intensity: 70,
+      teaches: "Estabelece atmosfera e a pergunta central, sem ensinar conceito ainda.",
+      viz: "Vídeo all-intra com tempo controlado pela rolagem" },
+    { act: "0", n: "01", title: "A pergunta", kind: "livre", intensity: 18,
+      teaches: "Dois processos, velocidades diferentes, um espaço finito entre eles.",
+      viz: "Tipografia apenas — primeiro respiro" },
+
+    { act: "I", n: "02", title: "Os três papéis", kind: "fixada", intensity: 45,
+      teaches: "Produtor, consumidor e buffer de capacidade finita N. Por que o intermediário existe.",
+      viz: "V1 — os três atores entram e se conectam" },
+    { act: "I", n: "03", title: "O descompasso", kind: "fixada", intensity: 60,
+      teaches: "Geração e consumo em ritmos distintos; o buffer enchendo e esvaziando.",
+      viz: "V1 — produtor rápido contra consumidor lento" },
+    { act: "I", n: "04", title: "Cheio e vazio", kind: "interativa", intensity: 78, axis: true,
+      teaches: "As duas condições críticas de sincronização, sob controle do visitante.",
+      viz: "V1 — controles: N, ritmo de produção e consumo" },
+
+    { act: "II", n: "05", title: "Memória compartilhada", kind: "fixada", intensity: 50,
+      teaches: "O modelo tradicional: estado comum no heap, acesso arbitrado pelo programador.",
+      viz: "V4 — buffer como área compartilhada com dois ponteiros" },
+    { act: "II", n: "06", title: "Condição de corrida", kind: "fixada", intensity: 85,
+      teaches: "Duas escritas concorrentes no mesmo contador produzindo estado inconsistente.",
+      viz: "V2 — intercalação de instruções em câmera lenta" },
+    { act: "II", n: "07", title: "As travas", kind: "fixada", intensity: 55,
+      teaches: "Mutex, semáforos contadores (empty/full) e variáveis de condição.",
+      viz: "V4 — primitivas como portões que o ator precisa atravessar" },
+    { act: "II", n: "08", title: "A ordem importa", kind: "interativa", intensity: 95,
+      teaches: "Trocar duas linhas de sincronização trava o programa para sempre.",
+      viz: "V3 — o visitante reordena as linhas e provoca o impasse" },
+    { act: "II", n: "09", title: "C e Java", kind: "livre", intensity: 35,
+      teaches: "O mesmo problema expresso em pthreads e em monitores synchronized.",
+      viz: "Blocos de código com o peso da sincronização destacado" },
+
+    { act: "III", n: "10", title: "Hoare, 1978", kind: "cinematica", intensity: 55,
+      teaches: "CSP: processos sequenciais isolados que se comunicam por canais.",
+      viz: "V5 — memória compartilhada se dissolve em canais" },
+    { act: "III", n: "11", title: "O lema", kind: "livre", intensity: 12,
+      teaches: "Não comunique compartilhando memória; compartilhe memória comunicando.",
+      viz: "Nenhuma — silêncio tipográfico deliberado" },
+    { act: "III", n: "12", title: "Goroutines", kind: "fixada", intensity: 65,
+      teaches: "Unidade de execução leve gerida pelo runtime, não pelo sistema operacional.",
+      viz: "V7 escala + V8 escalonador GMP" },
+    { act: "III", n: "13", title: "O canal", kind: "interativa", intensity: 90, axis: true,
+      teaches: "make(chan T, N) é o buffer limitado, nativo e seguro por projeto.",
+      viz: "V1 de novo — mesma interface, agora sobre canais" },
+    { act: "III", n: "14", title: "Bloqueio automático", kind: "fixada", intensity: 70,
+      teaches: "ch <- v bloqueia no cheio; <-ch bloqueia no vazio. Sem flags, sem espera ocupada.",
+      viz: "V5 — envio e recebimento com bloqueio e liberação" },
+    { act: "III", n: "15", title: "Ciclo de vida", kind: "fixada", intensity: 50,
+      teaches: "close, for range, direção de canal como contrato de compilação e WaitGroup.",
+      viz: "V9 — inclui erro do compilador ao violar a direção" },
+
+    { act: "IV", n: "16", title: "Dentro do hchan", kind: "fixada", intensity: 88,
+      teaches: "Buffer circular, sendx/recvx, filas sendq/recvq, sudog, gopark e goready.",
+      viz: "V6 — rotulada explicitamente como interna do runtime" },
+
+    { act: "V", n: "17", title: "Demonstração", kind: "interativa", intensity: 60,
+      teaches: "Execução real e efeito de alterar N, número de consumidores e tempos.",
+      viz: "Go Playground e OneCompiler por embed gratuito" },
+    { act: "V", n: "18", title: "C × Java × Go", kind: "livre", intensity: 45,
+      teaches: "Comparação técnica de mecanismos e trade-offs, sem eleger vencedor.",
+      viz: "V10 — o mesmo programa nas três linguagens" },
+    { act: "V", n: "19", title: "Síntese", kind: "livre", intensity: 28,
+      teaches: "O que muda quando a sincronização deixa de ser responsabilidade manual.",
+      viz: "Tipografia e retorno visual ao canal da abertura" },
+    { act: "V", n: "20", title: "Referências", kind: "livre", intensity: 10,
+      teaches: "Fontes primárias verificáveis: go.dev, runtime/chan.go, Hoare 1978, Tanenbaum.",
+      viz: "Nenhuma" },
+  ];
+
+  const VIZ = [
+    { id: "V1", p: "P0", name: "O buffer, dois motores",
+      desc: "A peça central. Produtor, buffer de N posições e consumidor, com controles de ritmo e capacidade. Roda com trava manual no Ato I e com canal no Ato III — a mesma interface, resultados opostos.",
+      tech: "SVG + requestAnimationFrame · relógio próprio" },
+    { id: "V2", p: "P0", name: "Condição de corrida",
+      desc: "Duas goroutines escrevendo o mesmo contador com a intercalação exposta passo a passo. Lenta o bastante para ser lida, não um borrão.",
+      tech: "SVG + linha do tempo de instruções" },
+    { id: "V3", p: "P0", name: "Impasse por ordem errada",
+      desc: "Produtor e consumidor cada um segurando o recurso que o outro espera. O visitante reordena as linhas e o relógio da cena literalmente congela.",
+      tech: "SVG + arrastar para reordenar" },
+    { id: "V5", p: "P0", name: "Rendezvous e canal",
+      desc: "Contraste entre canal sem buffer (encontro síncrono) e com buffer (fila). Base visual do bloqueio automático.",
+      tech: "SVG animado" },
+    { id: "V6", p: "P0", name: "Anatomia do hchan",
+      desc: "Buffer circular com cursores sendx/recvx, contadores qcount/dataqsiz e as filas sendq/recvq com sudog. A peça mais sofisticada do projeto.",
+      tech: "SVG + rolagem controlando o estado" },
+    { id: "V4", p: "P1", name: "Primitivas tradicionais",
+      desc: "Mutex, semáforos empty/full e variáveis de condição como portões sequenciais que o ator precisa atravessar na ordem certa.",
+      tech: "SVG + CSS" },
+    { id: "V9", p: "P1", name: "Ciclo de vida do canal",
+      desc: "close, for range e a restrição de direção mostrada como erro de compilação, não como texto explicativo.",
+      tech: "DOM + CSS" },
+    { id: "V10", p: "P1", name: "Comparação nas três linguagens",
+      desc: "O mesmo programa em C, Java e Go, com o custo de sincronização destacado em cada um. Sem declarar vencedor.",
+      tech: "DOM + realce de sintaxe próprio" },
+    { id: "V7", p: "P2", name: "Escala goroutine × thread",
+      desc: "Comparação de custo de pilha inicial. Só entra com número verificado em fonte primária do go.dev, conforme exige o briefing.",
+      tech: "SVG · pendente de verificação" },
+    { id: "V8", p: "P2", name: "Escalonador GMP",
+      desc: "Goroutines distribuídas em processadores lógicos sobre threads do sistema, com work-stealing.",
+      tech: "Canvas, se a contagem de elementos exigir" },
+  ];
+
+  const DECISIONS = [
+    { t: "GSAP auto-hospedado, não via CDN",
+      p: ["Na estrutura acima incluí uma pasta <code>vendor/gsap/</code>. A versão anterior do site carregava GSAP do cdnjs — se a rede da faculdade bloquear o domínio no dia 14/10, o site perde toda a camada de movimento na hora da apresentação.",
+          "Auto-hospedar são cerca de 70 KB a mais no repositório e elimina a dependência externa. Recomendo fortemente. A alternativa é manter o CDN com um fallback local, o que dá o mesmo trabalho pelo dobro da complexidade."] },
+    { t: "Os embeds externos são o ponto frágil do Ato V",
+      p: ["Go Playground e OneCompiler são iframes de terceiros: dependem de internet e podem recusar enquadramento. A cena 17 precisa funcionar mesmo se os dois falharem.",
+          "Proponho que o código apareça sempre em bloco próprio, com botão de copiar e link externo, e o embed seja um aprimoramento opcional por cima — nunca o único caminho."] },
+    { t: "A cena 16 mexe com internals do runtime",
+      p: ["O briefing é explícito: separar comportamento observável da linguagem, implementação interna atual do runtime e metáfora didática. Vou rotular a cena inteira como interna e conferir cada campo no código-fonte oficial de <code>runtime/chan.go</code> antes de animar.",
+          "O mesmo vale para o número de 2 KB da pilha inicial da goroutine (V7): só entra no site com fonte primária confirmada, senão fica de fora."] },
+    { t: "Vinte e uma cenas é muita coisa para 14/10",
+      p: ["O caminho crítico são as cinco visualizações P0 — elas sozinhas sustentam o argumento inteiro. As P1 enriquecem e as P2 são dispensáveis.",
+          "Se em algum momento o cronograma apertar, corto pelas P2 e pelas cenas 07 e 18, não pela qualidade das P0. Me avise se preferir outra ordem de sacrifício."] },
+  ];
+
+  const tintOf = (actId) => ACTS.find((a) => a.id === actId).tint;
+
+  /* Mapa de ritmo */
+  document.getElementById("rhythm").innerHTML = SCENES.map(
+    (s) => `<div class="rhythm-bar" style="--h: ${s.intensity}%; --tint: ${tintOf(s.act)}"
+                 data-n="${s.n}" title="${s.n} ${s.title} — intensidade ${s.intensity}"></div>`
+  ).join("");
+
+  document.getElementById("legend").innerHTML = ACTS.map(
+    (a) => `<span style="--tint: ${a.tint}">Ato ${a.id} · ${a.name}</span>`
+  ).join("");
+
+  /* Cenas agrupadas por ato */
+  document.getElementById("acts").innerHTML = ACTS.map((a) => {
+    const scenes = SCENES.filter((s) => s.act === a.id);
+    return `
+      <div class="act" style="--tint: ${a.tint}">
+        <div class="act-head">
+          <span class="act-num">Ato ${a.id}</span>
+          <h3 class="act-name">${a.name}</h3>
+        </div>
+        ${scenes.map((s) => `
+          <article class="scene" data-axis="${!!s.axis}">
+            <span class="scene-num">${s.n}</span>
+            <h4 class="scene-title">${s.title}</h4>
+            <div>
+              <p class="scene-teaches">${s.teaches}</p>
+              <span class="scene-viz">${s.viz}</span>
+              ${s.axis ? '<span class="axis-flag">↳ eixo do argumento</span>' : ""}
+            </div>
+            <div class="scene-meta">
+              <span class="chip" data-kind="${s.kind}">${s.kind}</span>
+            </div>
+          </article>`).join("")}
+      </div>`;
+  }).join("");
+
+  /* Inventário */
+  const pTint = { P0: "var(--flow-500)", P1: "var(--hold-500)", P2: "var(--bone-500)" };
+  document.getElementById("inventory").innerHTML = VIZ.map(
+    (v) => `
+      <article class="viz" style="--tint: ${pTint[v.p]}">
+        <span class="viz-id">${v.id} · ${v.p}</span>
+        <h3 class="viz-name">${v.name}</h3>
+        <p class="viz-desc">${v.desc}</p>
+        <span class="viz-tech">${v.tech}</span>
+      </article>`
+  ).join("");
+
+  /* Decisões */
+  document.getElementById("decisions").innerHTML = DECISIONS.map(
+    (d) => `<article class="decision"><h3>${d.t}</h3>${d.p.map((x) => `<p>${x}</p>`).join("")}</article>`
+  ).join("");
+</script>
+
+</body>
+</html>
