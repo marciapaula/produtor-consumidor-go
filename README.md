@@ -156,10 +156,23 @@ As mensagens do tipo `canal cheio, esperando espaço` existem apenas para tornar
 ├── Docs/
 │   ├── Paradigma01.md        # relatório técnico (texto-fonte)
 │   └── Paradigma01.pdf       # relatório técnico em PDF
-├── produtor_consumidor.go    # solução em Go (a do permalink)
-├── produtor_consumidor.c     # versão de comparação em C
-├── Main.java                 # versão de comparação em Java
+├── Site_Seminario/           # site de apoio do seminário (Firebase Hosting)
+│   ├── public/               # conteúdo publicado em prodconsumer.web.app
+│   │   ├── assets/           # imagens e vídeo
+│   │   ├── scripts/          # animações e visualizações
+│   │   ├── styles/           # folhas de estilo
+│   │   ├── vendor/gsap/      # biblioteca de animação GSAP
+│   │   ├── 404.html          # página de erro
+│   │   ├── index.html        # página do seminário
+│   │   ├── storyboard.html   # roteiro das cenas (não publicado)
+│   │   └── styleguide.html   # direção de arte e design tokens (não publicado)
+│   ├── .firebaserc           # projeto Firebase
+│   ├── .gitignore
+│   └── firebase.json         # configuração do Firebase Hosting
 ├── .gitignore
+├── Main.java                 # versão de comparação em Java
+├── produtor_consumidor.c     # versão de comparação em C
+├── produtor_consumidor.go    # solução em Go (a do permalink)
 └── README.md
 ```
 
