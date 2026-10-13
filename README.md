@@ -17,7 +17,7 @@
 ## Execução do Código
 
 - **Ambiente Online Utilizado:** Go Playground (go.dev/play)
-- **Permalink:** `COLAR AQUI O PERMALINK NOVO` \<!-- gerar com Share a partir de produtor_consumidor.go e testar em aba anônima -->
+- **Permalink:** [https://go.dev/play/p/ECVgIV7MZx0](https://go.dev/play/p/ECVgIV7MZx0)
 - **Site de apoio do seminário:** [https://prodconsumer.web.app](https://prodconsumer.web.app)
 
 ### Instruções de Teste (Entrada e Saída)
