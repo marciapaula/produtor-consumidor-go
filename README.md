@@ -19,6 +19,8 @@
 - **Ambiente Online Utilizado:** Go Playground (go.dev/play)
 - **Permalink:** [https://go.dev/play/p/gJwv2ypibzx](https://go.dev/play/p/U9MCwuryCb5)
 - **Site de apoio do seminário:** [https://prodconsumer.web.app](https://prodconsumer.web.app)
+- **Relatório em PDF:** [Docs/Paradigma01.pdf](Docs/Paradigma01.pdf)
+- **Relatório em Markdown:** [Docs/Paradigma01.md](Docs/Paradigma01.md)
 
 ### Instruções de Teste (Entrada e Saída)
 
