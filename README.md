@@ -1,8 +1,8 @@
-## Avaliação A2 - Paradigmas de Linguagens de Programação
+# Avaliação A2 - Paradigmas de Linguagens de Programação
 
-### Grupo 01
+**Grupo 01**
 
-#### Integrantes
+## 👥 Integrantes (3 a 5 alunos)
 - Andrei Rodrigues de Barros (33468982)
 - Gabriel Silva Medeiros (32825706)
 - Márcia Paula de Sousa (35835133)
@@ -46,8 +46,6 @@ No último cenário, o `registrar` logo abaixo de `close(canal)` também deve se
 
 **Entrada de Exemplo:**
 
-text
-
 ```text
 const (
 	capacidade   = 3  // tamanho do buffer do canal (o N do problema)
@@ -62,8 +60,6 @@ const (
 ```
 
 **Saída Esperada:**
-
-text
 
 ```text
 Produtor-consumidor em Go | canal de 3 | 10 itens | consumidores: 2
@@ -113,8 +109,6 @@ Os 10 itens foram produzidos e consumidos.
 
 O buffer limitado do problema clássico é o próprio **canal com buffer** de Go:
 
-go
-
 ```go
 canal := make(chan int, capacidade)
 ```
@@ -123,8 +117,6 @@ A solução tem três partes.
 
 **`produtor(canal chan<- int)`** — uma goroutine que gera os itens de 1 a `totalItens`. Antes de cada item, simula o tempo de produção com `time.Sleep`, usando a função auxiliar `tempoDeProducao(item)`, que devolve a pausa longa na fase 1 e a curta na fase 2. O envio é uma única instrução:
 
-go
-
 ```go
 canal <- item // espera aqui enquanto não houver espaço livre
 ```
@@ -132,8 +124,6 @@ canal <- item // espera aqui enquanto não houver espaço livre
 Se o canal estiver cheio, esse envio bloqueia sozinho até um consumidor liberar espaço. Ao terminar, o produtor chama `close(canal)` para avisar que não haverá mais itens.
 
 **`consumidor(id int, canal <-chan int, grupo *sync.WaitGroup)`** — duas goroutines leem do mesmo canal com o laço idiomático:
-
-go
 
 ```go
 for item := range canal {
@@ -180,7 +170,7 @@ As mensagens do tipo `canal cheio, esperando espaço` existem apenas para tornar
 
 ### Análise Comparativa
 
-#### 1. Sintaxe
+### 1. Sintaxe
 
 Em Go a solução é mais curta e mais declarativa: escreve-se **o que precisa ser comunicado**, e não **como proteger a memória**. Contando apenas linhas de código (sem linhas em branco e sem comentários) dos três programas, que fazem exatamente a mesma coisa e produzem a mesma saída:
 
@@ -192,15 +182,11 @@ Em Go a solução é mais curta e mais declarativa: escreve-se **o que precisa s
 
 O envio de um item ilustra a diferença. Em Go:
 
-go
-
 ```go
 canal <- item
 ```
 
 Em C, a mesma operação exige trancar, testar a condição em laço, escrever no buffer, atualizar os índices, sinalizar e destrancar:
-
-c
 
 ```c
 pthread_mutex_lock(&buffer->trava);
@@ -220,7 +206,7 @@ No consumidor, `for item := range canal` substitui todo o protocolo de término 
 
 Parte da diferença de linhas vem do log formatado, que em C exige funções próprias de alinhamento. Mas o núcleo do problema — buffer, espera e término — é o que mais encolhe: em Go são três construções da linguagem, contra três mecanismos coordenados manualmente nas outras duas.
 
-#### 2. Semântica
+### 2. Semântica
 
 **Comunicação por canais (CSP).** Go segue o modelo *Communicating Sequential Processes*, de C. A. R. Hoare (1978). As goroutines não compartilham o buffer diretamente: elas transferem a posse de cada item pelo canal. Em C e Java, as threads compartilham a mesma estrutura, e a correção depende da disciplina do programador em sempre passar pelo lock.
 
@@ -232,9 +218,9 @@ Parte da diferença de linhas vem do log formatado, que em C exige funções pr�
 
 **Modelo de memória.** O *Go Memory Model* garante que um envio no canal *acontece antes* (happens-before) do recebimento correspondente. Quem recebe o item enxerga tudo o que o produtor escreveu antes de enviá-lo, sem `volatile` nem barreiras de memória manuais. Em Java, a mesma garantia existe, mas depende de `synchronized` ou `volatile` usados corretamente.
 
-**Detecção de impasse.** Se todas as goroutines ficarem bloqueadas, o runtime de Go aborta com `fatal error: all goroutines are asleep - deadlock!`. O grupo reproduziu isso comentando a linha `close(canal)` — a saída está em `codigo/saida_go_deadlock.txt`. Em C, um deadlock simplesmente congela o programa, sem mensagem.
+**Detecção de impasse.** Se todas as goroutines ficarem bloqueadas, o runtime de Go aborta com `fatal error: all goroutines are asleep - deadlock!`. O grupo reproduziu isso no Go Playground, comentando a linha `close(canal)`. Em C, um deadlock simplesmente congela o programa, sem mensagem.
 
-#### 3. Gerenciamento de Memória
+### 3. Gerenciamento de Memória
 
 |                 | C                                                       | Java                                | Go                               |
 | --------------- | ------------------------------------------------------- | ----------------------------------- | -------------------------------- |
@@ -244,8 +230,6 @@ Parte da diferença de linhas vem do log formatado, que em C exige funções pr�
 | Outros recursos | `pthread_mutex_destroy` e `pthread_cond_destroy` na mão | o monitor desaparece com o objeto   | o canal desaparece com o coletor |
 
 **C: tudo na mão.** Na versão do grupo, `criar_buffer()` aloca a struct e o vetor de itens com `malloc` e trata a falta de memória; `destruir_buffer()` destrói a trava e as duas variáveis de condição e só então libera o vetor e a struct, nessa ordem — liberar a struct primeiro perderia o endereço do vetor. A limpeza em C vai além da memória: as primitivas de sincronização também precisam ser destruídas. O programa foi verificado com Valgrind:
-
-text
 
 ```text
 total heap usage: 42 allocs, 42 frees, 16.032 bytes allocated
@@ -258,7 +242,7 @@ All heap blocks were freed -- no leaks are possible
 
 **Goroutines e threads.** Uma goroutine começa com uma pilha de 2 KB (`stackMin = 2048`, em `runtime/stack.go`), que cresce e encolhe sob demanda, e é escalonada pelo runtime no espaço de usuário — o modelo GMP, em que goroutines (G) são distribuídas sobre threads do sistema (M) por meio de processadores lógicos (P). Uma thread do sistema operacional, usada por C (pthreads) e pelas threads de plataforma do Java, reserva uma pilha bem maior, definida pelo sistema, e é escalonada pelo kernel. Por isso é viável criar muitas goroutines, e o número de consumidores vira apenas uma constante no código.
 
-#### 4. Trade-offs
+### 4. Trade-offs
 
 **Vantagens do modelo de Go para este desafio:**
 
@@ -289,19 +273,21 @@ O grupo utilizou ferramentas de IA como apoio em algumas etapas do trabalho, con
 | Parte do trabalho        | Uso da IA como apoio                                                                                             | Decidido / verificado pelo grupo                                                                      |
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | Organização do seminário | —                                                                                                                | Divisão da apresentação em três tópicos, um por integrante                                            |
-| Pesquisa (`Docs/`)       | Relatórios de pesquisa sobre produtor-consumidor e concorrência em Go (Gemini, Deep Research)                    | Definição dos três tópicos e do que cada um deveria cobrir; leitura e revisão do material             |
+| Pesquisa                 | Relatórios de pesquisa sobre produtor-consumidor e concorrência em Go, usados como material de consulta (Gemini, Deep Research) | Definição dos três tópicos e do que cada um deveria cobrir; leitura e revisão do material             |
 | Roteiro dos slides       | Sugestões para organizar os tópicos e a sequência da apresentação (ChatGPT)                                     | Definição dos tópicos, divisão entre integrantes e revisão do roteiro pelo grupo                       |
 | Slides (`.pptx`)         | Apoio à estruturação e à ordenação do conteúdo dos slides (ChatGPT)                                               | Montagem e ajustes finais da apresentação, além da conferência do conteúdo pelo grupo                 |
 | Programas (Go, C, Java)  | Apoio pontual para compreender exemplos, esclarecer dúvidas sobre a sintaxe de Go e investigar erros na solução do produtor-consumidor (Claude) | Análise das sugestões, ajustes no código, execução dos programas e verificação dos resultados          |
 | Site do seminário        | HTML/CSS/JavaScript, animações e visualizações (Claude)                                                          | Conteúdo das cenas e revisão da página publicada                                                      |
 | Testes e verificação     | —                                                                                                                | Execução nos ambientes online, variação de parâmetros e conferência das fontes                        |
+| Revisão da entrega       | Revisão do README: títulos do modelo, blocos de código, referências a arquivos e coerência do log com a pasta `Docs/` (Claude Opus 5.5) | Análise das correções sugeridas e conferência do texto final                                          |
 
 - **O que foi pedido à IA:** 
-  1. **Pesquisa sobre o tema** (Gemini, Deep Research) — levantamento sobre o problema produtor-consumidor, concorrência em Go, modelo CSP, goroutines, canais e a comparação com threads e mutex em C e Java, a partir dos três tópicos definidos pelo grupo. O resultado está na pasta `Docs/`.
+  1. **Pesquisa sobre o tema** (Gemini, Deep Research) — levantamento sobre o problema produtor-consumidor, concorrência em Go, modelo CSP, goroutines, canais e a comparação com threads e mutex em C e Java, a partir dos três tópicos definidos pelo grupo. Os relatórios gerados serviram como material de consulta; a pasta `Docs/` guarda o relatório técnico do grupo.
   2. **Estruturação dos slides** (ChatGPT) — apoio para organizar os tópicos e definir uma sequência clara para a apresentação. A seleção final e a adaptação da estrutura foram feitas pelo grupo.
   3. **Aprendizado da sintaxe de Go** (Claude) — como nenhum integrante tinha contato prévio com a linguagem, a IA foi consultada para compreender exemplos, esclarecer dúvidas de sintaxe e entender como goroutines e canais são utilizados na solução do problema produtor-consumidor.
   4. **Dúvidas e revisão do código** (Claude) — apoio pontual para interpretar erros e avaliar possíveis correções durante o desenvolvimento das versões em Go, C e Java. O grupo analisou as sugestões, executou os programas e conferiu os resultados para compreender o comportamento da solução.
   5. **Site do seminário** (Claude) — apoio no desenvolvimento das páginas, estilos, animações e visualizações do site.
+  6. **Revisão da entrega** (Claude Opus 5.5) — revisão do README antes da entrega: restauração dos títulos do modelo do enunciado, remoção de palavras soltas antes dos blocos de código, retirada das menções a um arquivo que não existe no repositório e ajuste do log para deixar claro que a pasta `Docs/` guarda o relatório do grupo. O grupo analisou as correções e conferiu o texto final.
 - **Qual IA foi utilizada:** Google Gemini (Deep Research), para apoiar a pesquisa; OpenAI ChatGPT, para a estruturação dos slides; Anthropic Claude, para esclarecer dúvidas sobre a linguagem, apoiar a análise de erros no código e auxiliar no desenvolvimento do site.
-- **O que foi aproveitado:** os relatórios de pesquisa da pasta `Docs/`, sugestões para organizar a sequência da apresentação, explicações e exemplos que ajudaram o grupo a compreender a sintaxe de Go e o uso de goroutines e canais, além do código do site. As sugestões relacionadas ao código foram avaliadas e conferidas por meio de testes.
-- **O que foi reescrito/entendido pelo grupo:** **Organização e recorte.** O grupo definiu os três tópicos de pesquisa, dividiu a apresentação entre os integrantes e revisou a estrutura da apresentação. Entre os cuidados de integridade técnica mantidos ao longo do trabalho estão: não afirmar que canais eliminam toda condição de corrida ou deadlock, não usar números de memória ou desempenho sem fonte verificável, apresentar os detalhes do runtime como implementação atual e não como regra da linguagem, e conferir autores, citações e referências. **Aprendizado e revisão do código.** Como o grupo não tinha contato prévio com Go, utilizou a IA para esclarecer dúvidas de sintaxe, compreender exemplos e entender como goroutines e canais são aplicados ao problema produtor-consumidor. Também houve consultas pontuais para interpretar erros e avaliar possíveis ajustes. O grupo analisou as sugestões e executou os programas nos ambientes online (Go Playground e OneCompiler), variando o tamanho do buffer e o número de consumidores e removendo `close(canal)` para observar o cenário de deadlock registrado em `codigo/saida_go_deadlock.txt`. **Revisões aplicadas ao material.** Antes da entrega, o grupo conferiu algumas afirmações técnicas e corrigiu problemas de consistência. A frase sobre compartilhar memória por meio da comunicação foi conferida na documentação de Go; a afirmação de que canais eliminam condições de corrida e deadlocks foi ajustada para reconhecer que ainda podem ocorrer erros de concorrência; e as versões do programa presentes nos slides, no site e no arquivo entregue foram comparadas para manter a demonstração coerente. As fontes usadas na verificação foram a documentação oficial de Go (`go.dev/ref/mem`, `go.dev/doc/effective_go`), o código-fonte do runtime (`runtime/stack.go`, `runtime/chan.go`) e o livro *Sistemas Operacionais Modernos*, de Tanenbaum e Bos.
+- **O que foi aproveitado:** os relatórios de pesquisa do Gemini, como material de consulta, sugestões para organizar a sequência da apresentação, explicações e exemplos que ajudaram o grupo a compreender a sintaxe de Go e o uso de goroutines e canais, além do código do site. As sugestões relacionadas ao código foram avaliadas e conferidas por meio de testes.
+- **O que foi reescrito/entendido pelo grupo:** **Organização e recorte.** O grupo definiu os três tópicos de pesquisa, dividiu a apresentação entre os integrantes e revisou a estrutura da apresentação. Entre os cuidados de integridade técnica mantidos ao longo do trabalho estão: não afirmar que canais eliminam toda condição de corrida ou deadlock, não usar números de memória ou desempenho sem fonte verificável, apresentar os detalhes do runtime como implementação atual e não como regra da linguagem, e conferir autores, citações e referências. **Aprendizado e revisão do código.** Como o grupo não tinha contato prévio com Go, utilizou a IA para esclarecer dúvidas de sintaxe, compreender exemplos e entender como goroutines e canais são aplicados ao problema produtor-consumidor. Também houve consultas pontuais para interpretar erros e avaliar possíveis ajustes. O grupo analisou as sugestões e executou os programas nos ambientes online (Go Playground e OneCompiler), variando o tamanho do buffer e o número de consumidores. No Go Playground, também comentou `close(canal)` para reproduzir o deadlock. **Revisões aplicadas ao material.** Antes da entrega, o grupo conferiu algumas afirmações técnicas e corrigiu problemas de consistência. A frase sobre compartilhar memória por meio da comunicação foi conferida na documentação de Go; a afirmação de que canais eliminam condições de corrida e deadlocks foi ajustada para reconhecer que ainda podem ocorrer erros de concorrência; e as versões do programa presentes nos slides, no site e no arquivo entregue foram comparadas para manter a demonstração coerente. As fontes usadas na verificação foram a documentação oficial de Go (`go.dev/ref/mem`, `go.dev/doc/effective_go`), o código-fonte do runtime (`runtime/stack.go`, `runtime/chan.go`) e o livro *Sistemas Operacionais Modernos*, de Tanenbaum e Bos.
