@@ -19,6 +19,7 @@ Grupo 01 · Tema C1 · Paradigma Concorrente
 
 Este relatório estuda o problema clássico do produtor-consumidor com buffer limitado e a forma como a linguagem Go o resolve por meio de goroutines e canais. O trabalho está organizado em três partes. A primeira reconstrói a origem do problema, as duas condições críticas de sincronização e os riscos do modelo de memória compartilhada, apresentando a solução tradicional com semáforos, mutexes e variáveis de condição. A segunda examina o modelo *Communicating Sequential Processes* (CSP), de C. A. R. Hoare, adotado por Go, junto dos mecanismos da linguagem: goroutines, canais com buffer, semântica de bloqueio, ciclo de vida do canal e `sync.WaitGroup`. A terceira apresenta a implementação do grupo em Go, C e Java, a demonstração executável no Go Playground e a análise comparativa quanto a sintaxe, semântica, gerenciamento de memória e trade-offs. Conclui-se que o canal com buffer não acrescenta uma trava mais sofisticada ao modelo tradicional, mas desloca a responsabilidade pela sincronização do programador para a estrutura da linguagem, sem com isso eliminar todos os erros possíveis de concorrência.
 
+**Palavras-chave:** concorrência; produtor-consumidor; Go; CSP; canais; sincronização
 
 
 
